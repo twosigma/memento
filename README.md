@@ -1,4 +1,4 @@
-# Memento
+# Two Sigma Memento
 Memento is a framework and lightweight set of standards that encourage discipline in the way data
 is incrementally transformed through code. The goal of Memento is to ensure that data is
 reproducible and that accurate provenance is maintained in metadata. The Memento Framework
