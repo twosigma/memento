@@ -1,0 +1,6 @@
+[flake8]
+exclude = test*
+max-line-length = 99
+ignore =
+	D,  # docstrings
+	Q0  # single inline quotes

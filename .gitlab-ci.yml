@@ -1,0 +1,54 @@
+variables:
+  DOCKER_IMAGE_TAG: "$CI_PIPELINE_ID.$CI_COMMIT_SHORT_SHA"
+  QA_GCP_PROJECT_NAME: "ts-alphastudio-qa"
+  QA_DATAGEN_CLUSTER_NAME: "datagen"
+  QA_CLUSTER_REGION: "us-east4-a"
+
+include:
+  - /memento_server_client/.gitlab-ci.yml
+
+image: gcr.io/ts-quantsource/as-gitlab-runner:20210911-005939
+
+stages:
+  - build_client
+  - build_container
+  - build
+  - test
+  - deploy
+
+build-and-push-docker-containers:
+  stage: build_container
+  needs:
+    - job: "memento_server_client:bundle"
+      artifacts: true
+  script:
+    - PUSH=true memento_server/build.sh $DOCKER_IMAGE_TAG
+
+build-39:
+  stage: build
+  script:
+    - CONDA_ENV="py39" EXPECTED_PYTHON_VERSION="Python 3.9" ./build.sh
+  needs:
+    - build-and-push-docker-containers
+  except:
+    refs:
+      - master
+
+build-and-push-39:
+  stage: deploy
+  script:
+    - PUSH=true RUN_LONG_TESTS=true CONDA_ENV="py39" EXPECTED_PYTHON_VERSION="Python 3.9" ./build.sh
+  needs:
+    - build-and-push-docker-containers
+  only:
+    refs:
+      - master
+
+memento_server:tests:
+  stage: test
+  needs: []
+  before_script:
+    - useradd -m memento
+    - cd memento_server/
+  script:
+    - su memento -c './gradlew check --info'
