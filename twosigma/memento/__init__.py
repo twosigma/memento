@@ -15,7 +15,7 @@
 """Public interface for memento module."""
 import importlib
 
-import pkg_resources
+from importlib_metadata import entry_points
 
 from .logging import set_log_level
 
@@ -71,8 +71,8 @@ def _load_plugins():
     """
     Dynamically load plugins by importing their modules.
     """
-    for entry_point in pkg_resources.iter_entry_points("twosigma.memento.plugin"):
-        importlib.import_module(entry_point.module_name)
+    for entry_point in entry_points(group="twosigma.memento.plugin"):
+        importlib.import_module(entry_point.name)
 
 
 _load_plugins()
