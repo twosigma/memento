@@ -18,7 +18,6 @@ import hashlib
 import inspect
 from collections import namedtuple
 from typing import Callable, Dict, Any, Tuple, List, Union, Optional, Set, cast
-import pkg_resources
 
 from .configuration import Environment, ENVIRONMENT_HASH_BYTES
 from .base import MementoFunctionBase
@@ -33,8 +32,6 @@ from .reference import FunctionReference
 from .code_hash import fn_code_hash, resolve_to_symbolic_names, \
     HashRule, MementoFunctionHashRule, list_dotted_names
 from .metadata import ResultType
-
-pkg_resources.declare_namespace('twosigma.memento')
 
 
 _MementoFunctionVersionCacheEntry =\
