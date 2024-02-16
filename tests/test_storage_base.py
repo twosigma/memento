@@ -21,7 +21,6 @@ import pytest
 # There is no public equivalent, so we import the protected function.
 # If it is ever removed, we can replace it in the unit test.
 # noinspection PyProtectedMember
-from pandas._testing import rands_array
 from pandas.testing import assert_frame_equal, assert_index_equal, assert_series_equal
 from numpy.testing import assert_array_equal
 
@@ -96,7 +95,7 @@ class TestMemoryCache:
         memento = self.get_dummy_memento()
         arg_hash = memento.invocation_metadata.fn_reference_with_args.arg_hash
         # Note: This also tests the stability of the function code hash
-        assert "tests.test_storage_base:fn_test1#1f709406e9048e2e/{}".format(arg_hash) == \
+        assert "tests.test_storage_base:fn_test1#de769e9c8c9b500e/{}".format(arg_hash) == \
                cache._cache_key_for_memento(memento)
 
     @pytest.mark.needs_canonical_version
@@ -104,7 +103,7 @@ class TestMemoryCache:
         cache = MemoryCache(1)
         arg_hash = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {}).arg_hash
         # Note: This also tests the stability of the function code hash
-        assert "tests.test_storage_base:fn_test1#1f709406e9048e2e/{}".format(arg_hash) == \
+        assert "tests.test_storage_base:fn_test1#de769e9c8c9b500e/{}".format(arg_hash) == \
             cache._cache_key_for_fn(fn_test1.fn_reference(), arg_hash)
 
     def test_put_read_result(self):
@@ -190,7 +189,8 @@ class TestSerializationStrategy:
         # This test takes a long time to run because it constructs a > 2 GB
         # DataFrame to ensure it can be encoded.
 
-        df = pd.DataFrame({'test': rands_array(250, 1000000) * 10})
+        arr = np.random.randint(0, 1000000, size=250) * 10
+        df = pd.DataFrame({'test': arr})
         total_mem = df.memory_usage(deep=True).sum()
         assert total_mem >= 1024 * 1024 * 1024 * 2, 'Memory used: {}'.format(total_mem)  # 2 GB
 
