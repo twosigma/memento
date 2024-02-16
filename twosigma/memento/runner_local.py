@@ -34,12 +34,16 @@ from .result import KeyOverrideResult
 from .runner import RunnerBackend, process_existing_memento, ExistingMementoResult
 from .storage import StorageBackend
 
-_memento_fn_mutex_lock = RLock()  # Lock to protect the defaultdict since it is not ThreadSafe
+_memento_fn_mutex_lock = (
+    RLock()
+)  # Lock to protect the defaultdict since it is not ThreadSafe
 # with the lambda
 _memento_fn_mutex = defaultdict(lambda: RLock())  # type: Dict[Tuple[str, str], RLock]
 
 
-def _mutex_for_invocation(fn_reference_with_args: FunctionReferenceWithArguments) -> RLock:
+def _mutex_for_invocation(
+    fn_reference_with_args: FunctionReferenceWithArguments,
+) -> RLock:
     """
     Check if any other callers in this process are calling this function at the same
     time and, if so, wait for them to complete.
@@ -49,8 +53,12 @@ def _mutex_for_invocation(fn_reference_with_args: FunctionReferenceWithArguments
 
     """
     with _memento_fn_mutex_lock:
-        return _memento_fn_mutex[(fn_reference_with_args.fn_reference.qualified_name,
-                                  fn_reference_with_args.arg_hash)]
+        return _memento_fn_mutex[
+            (
+                fn_reference_with_args.fn_reference.qualified_name,
+                fn_reference_with_args.arg_hash,
+            )
+        ]
 
 
 class LocalRunnerBackend(RunnerBackend):
@@ -63,10 +71,14 @@ class LocalRunnerBackend(RunnerBackend):
     def __init__(self, config: dict = None):
         super().__init__("local", config=config)
 
-    def batch_run(self, context: InvocationContext, storage_backend: StorageBackend,
-                  fn_reference_with_args: List[FunctionReferenceWithArguments],
-                  log_runner_backend: RunnerBackend,
-                  caller_memento: Optional[Memento]) -> List[Any]:
+    def batch_run(
+        self,
+        context: InvocationContext,
+        storage_backend: StorageBackend,
+        fn_reference_with_args: List[FunctionReferenceWithArguments],
+        log_runner_backend: RunnerBackend,
+        caller_memento: Optional[Memento],
+    ) -> List[Any]:
         context = self.ensure_correlation_id(context, fn_reference_with_args)
 
         arg_list = fn_reference_with_args
@@ -74,21 +86,27 @@ class LocalRunnerBackend(RunnerBackend):
 
         # Bulk query for existing mementos
         existing_mementos = storage_backend.get_mementos(
-            [f.fn_reference_with_arg_hash() for f in fn_reference_with_args])
+            [f.fn_reference_with_arg_hash() for f in fn_reference_with_args]
+        )
 
-        if context.local.monitor_progress and CallStack.get().get_calling_frame() is None:
+        if (
+            context.local.monitor_progress
+            and CallStack.get().get_calling_frame() is None
+        ):
             # Only show progress bar if monitor_progress is set and this is the root call
             arg_list = tqdm(arg_list)
 
         # Since memento_run_local handles updating the invocation list of the caller already, the
         # local runner can ignore caller_memento.
         for idx, f in enumerate(arg_list):
-            existing_memento_result = ExistingMementoResult(result=None, valid_result=False)
+            existing_memento_result = ExistingMementoResult(
+                result=None, valid_result=False
+            )
             existing_memento = existing_mementos[idx]
             if existing_memento:
-                existing_memento_result = process_existing_memento(storage_backend,
-                                                                   existing_memento,
-                                                                   context.local.ignore_result)
+                existing_memento_result = process_existing_memento(
+                    storage_backend, existing_memento, context.local.ignore_result
+                )
             if existing_memento_result.valid_result:
                 results.append(existing_memento_result.result)
 
@@ -97,34 +115,40 @@ class LocalRunnerBackend(RunnerBackend):
                 call_stack = CallStack.get()
                 calling_frame = call_stack.get_calling_frame()
                 if calling_frame:
-                    propagate_dependencies(caller_memento=calling_frame.memento,
-                                           result_memento=existing_memento)
+                    propagate_dependencies(
+                        caller_memento=calling_frame.memento,
+                        result_memento=existing_memento,
+                    )
 
             else:
                 try:
-                    results.append(memento_run_local(context=context,
-                                                     fn_reference_with_args=f,
-                                                     storage_backend=storage_backend,
-                                                     log_runner_backend=log_runner_backend))
+                    results.append(
+                        memento_run_local(
+                            context=context,
+                            fn_reference_with_args=f,
+                            storage_backend=storage_backend,
+                            log_runner_backend=log_runner_backend,
+                        )
+                    )
                 except Exception as e:
                     results.append(e)
         return results
 
     def to_dict(self):
-        config = {
-            "type": "local"
-        }
+        config = {"type": "local"}
         return config
 
 
 RunnerBackend.register("local", LocalRunnerBackend)
 
 
-def memento_run_batch(context: InvocationContext,
-                      fn_reference_with_args: List[FunctionReferenceWithArguments],
-                      storage_backend: StorageBackend,
-                      runner_backend: RunnerBackend,
-                      log_runner_backend: RunnerBackend) -> List[Any]:
+def memento_run_batch(
+    context: InvocationContext,
+    fn_reference_with_args: List[FunctionReferenceWithArguments],
+    storage_backend: StorageBackend,
+    runner_backend: RunnerBackend,
+    log_runner_backend: RunnerBackend,
+) -> List[Any]:
     """
     Run a batch of Memento functions, using the given runner, with arguments.
     All calls to MementoFunctionTypes pass through this function, on the client side.
@@ -156,27 +180,37 @@ def memento_run_batch(context: InvocationContext,
 
     if caller_memento:
         # If the caller memento exists, pass down its correlation id and other fields
-        context = context.update_recursive("correlation_id", caller_memento.correlation_id)
-        context = context.update_recursive("retry_on_remote_call",
-                                           calling_frame.recursive_context.retry_on_remote_call)
+        context = context.update_recursive(
+            "correlation_id", caller_memento.correlation_id
+        )
+        context = context.update_recursive(
+            "retry_on_remote_call", calling_frame.recursive_context.retry_on_remote_call
+        )
         if context.recursive.context_args is None:
             # Only update the context args from the call stack if not overridden in this call
-            context = context.update_recursive("context_args",
-                                               calling_frame.recursive_context.context_args)
+            context = context.update_recursive(
+                "context_args", calling_frame.recursive_context.context_args
+            )
 
             # Update the fn_reference_with_args since the context args could change the
             # argument hash
             fn_reference_with_args = [
-                FunctionReferenceWithArguments(ref.fn_reference, ref.args, ref.kwargs,
-                                               context.recursive.context_args)
+                FunctionReferenceWithArguments(
+                    ref.fn_reference,
+                    ref.args,
+                    ref.kwargs,
+                    context.recursive.context_args,
+                )
                 for ref in fn_reference_with_args
             ]
 
-    return runner.batch_run(context=context,
-                            storage_backend=storage_backend,
-                            fn_reference_with_args=fn_reference_with_args,
-                            log_runner_backend=log_runner_backend,
-                            caller_memento=caller_memento)
+    return runner.batch_run(
+        context=context,
+        storage_backend=storage_backend,
+        fn_reference_with_args=fn_reference_with_args,
+        log_runner_backend=log_runner_backend,
+        caller_memento=caller_memento,
+    )
 
 
 def propagate_dependencies(caller_memento: Memento, result_memento: Memento):
@@ -197,10 +231,12 @@ def propagate_dependencies(caller_memento: Memento, result_memento: Memento):
     parent_dependencies |= result_memento.function_dependencies
 
 
-def memento_run_local(context: InvocationContext,
-                      fn_reference_with_args: FunctionReferenceWithArguments,
-                      storage_backend: StorageBackend,
-                      log_runner_backend: RunnerBackend) -> Any:
+def memento_run_local(
+    context: InvocationContext,
+    fn_reference_with_args: FunctionReferenceWithArguments,
+    storage_backend: StorageBackend,
+    log_runner_backend: RunnerBackend,
+) -> Any:
     """
     Run a single Memento function in the local process, with arguments.
     This is typically not called directly, but by a runner implementation.
@@ -227,11 +263,16 @@ def memento_run_local(context: InvocationContext,
     correlation_id = context.recursive.correlation_id
 
     # Log what we're calling
-    log.debug("{}: Calling {} with context {}".format(correlation_id, fn_reference_with_args,
-                                                      context))
+    log.debug(
+        "{}: Calling {} with context {}".format(
+            correlation_id, fn_reference_with_args, context
+        )
+    )
 
     # Create a stack frame for the invocation
-    log_runner = LocalRunnerBackend() if context.local.force_local else log_runner_backend
+    log_runner = (
+        LocalRunnerBackend() if context.local.force_local else log_runner_backend
+    )
     call_stack = CallStack.get()
     stack_frame = StackFrame(fn_reference_with_args, log_runner, context.recursive)
 
@@ -241,11 +282,12 @@ def memento_run_local(context: InvocationContext,
             call_stack.push_frame(stack_frame)
 
             existing_memento = storage_backend.get_memento(
-                fn_reference_with_args.fn_reference_with_arg_hash())
+                fn_reference_with_args.fn_reference_with_arg_hash()
+            )
             if existing_memento:
-                existing_memento_result = process_existing_memento(storage_backend,
-                                                                   existing_memento,
-                                                                   context.local.ignore_result)
+                existing_memento_result = process_existing_memento(
+                    storage_backend, existing_memento, context.local.ignore_result
+                )
                 if existing_memento_result.valid_result:
                     stack_frame.memento = existing_memento
                     return existing_memento_result.result
@@ -258,12 +300,15 @@ def memento_run_local(context: InvocationContext,
                 log.debug("{}: Function call begins".format(correlation_id))
                 # noinspection PyProtectedMember
                 result = fn_reference_with_args.fn_reference.memento_fn._filter_call(
-                    **fn_reference_with_args.effective_kwargs)
+                    **fn_reference_with_args.effective_kwargs
+                )
             except RemoteCallException:
                 # Special exception thrown if a remote call is made while processing
                 # the function. This should immediately stop processing and not memoize
                 # the result. The function will be retried by the framework later.
-                log.debug("Remote call detected during function execution. Retrying later.")
+                log.debug(
+                    "Remote call detected during function execution. Retrying later."
+                )
                 raise
             except NonMemoizedException:
                 # If the exception is marked not to be memoized, just raise it
@@ -283,7 +328,9 @@ def memento_run_local(context: InvocationContext,
                 key_override = result.key_override
                 result = result.result
 
-            stack_frame.memento.invocation_metadata.result_type = ResultType.from_object(result)
+            stack_frame.memento.invocation_metadata.result_type = (
+                ResultType.from_object(result)
+            )
 
             # Memoize the result if it is not already present.
             # There are two primary reasons a memoized result could have appeared while
@@ -291,39 +338,60 @@ def memento_run_local(context: InvocationContext,
             #     1. This function was invoked in another thread or process and we lost the race
             #     2. A runner is being used that memoized the result in another process (possibly
             #        on another machine in a compute cluster) and the result is already memoized.
-            if not storage_backend.is_memoized(fn_reference_with_args.fn_reference,
-                                               fn_reference_with_args.arg_hash):
+            if not storage_backend.is_memoized(
+                fn_reference_with_args.fn_reference, fn_reference_with_args.arg_hash
+            ):
                 try:
                     storage_backend.memoize(key_override, stack_frame.memento, result)
                     memoization_status = "successfully memoized"
                 except IOError:
-                    log.warning("IO Error while writing memoized result.", exc_info=True)
+                    log.warning(
+                        "IO Error while writing memoized result.", exc_info=True
+                    )
                     memoization_status = "memoization failed to write result"
             else:
-                memoization_status = "memoized elsewhere while we were computing the result"
+                memoization_status = (
+                    "memoized elsewhere while we were computing the result"
+                )
 
-            if context.local.ignore_result and stack_frame.memento.invocation_metadata.result_type\
-                    != ResultType.exception:
+            if (
+                context.local.ignore_result
+                and stack_frame.memento.invocation_metadata.result_type
+                != ResultType.exception
+            ):
                 log.debug(
-                    "{}: Result was computed, {} and is ignored".format(correlation_id,
-                                                                        memoization_status))
+                    "{}: Result was computed, {} and is ignored".format(
+                        correlation_id, memoization_status
+                    )
+                )
                 return
 
             # If an exception occurred, raise it instead of returning the result
             if exception_result is not None:
-                log.debug("{}: Result was computed, {} and is an exception: {}: {}".format(
-                    correlation_id, memoization_status, type(exception_result).__name__,
-                    exception_result))
+                log.debug(
+                    "{}: Result was computed, {} and is an exception: {}: {}".format(
+                        correlation_id,
+                        memoization_status,
+                        type(exception_result).__name__,
+                        exception_result,
+                    )
+                )
                 return exception_result
 
-            log.debug("{}: Result was computed, {} and is of type {}".format(
-                correlation_id, memoization_status,
-                stack_frame.memento.invocation_metadata.result_type.name))
+            log.debug(
+                "{}: Result was computed, {} and is of type {}".format(
+                    correlation_id,
+                    memoization_status,
+                    stack_frame.memento.invocation_metadata.result_type.name,
+                )
+            )
             return result
         finally:
             log.debug("{}: Function call ends".format(correlation_id))
             call_stack.pop_frame()
             calling_frame = call_stack.get_calling_frame()
             if calling_frame:
-                propagate_dependencies(caller_memento=calling_frame.memento,
-                                       result_memento=stack_frame.memento)
+                propagate_dependencies(
+                    caller_memento=calling_frame.memento,
+                    result_memento=stack_frame.memento,
+                )

@@ -45,8 +45,12 @@ class StackFrame:
     memento = None  # type: Memento
     recursive_context = None  # type: RecursiveContext
 
-    def __init__(self, fn_reference_with_args: FunctionReferenceWithArguments,
-                 runner: RunnerBackend, recursive_context: RecursiveContext):
+    def __init__(
+        self,
+        fn_reference_with_args: FunctionReferenceWithArguments,
+        runner: RunnerBackend,
+        recursive_context: RecursiveContext,
+    ):
         self.memento = Memento(
             time=datetime.datetime.now(datetime.timezone.utc),
             invocation_metadata=InvocationMetadata(
@@ -54,12 +58,12 @@ class StackFrame:
                 fn_reference_with_args=fn_reference_with_args,
                 result_type=None,
                 invocations=[],
-                resources=[]
+                resources=[],
             ),
             function_dependencies={fn_reference_with_args.fn_reference},
             runner=runner.to_dict(),
             correlation_id=recursive_context.correlation_id,
-            content_key=None
+            content_key=None,
         )
         self.recursive_context = recursive_context
 
@@ -79,6 +83,7 @@ class CallStack:
     a new `CallStack` is created.
 
     """
+
     _frames = None  # type: List[StackFrame]
 
     def __init__(self):

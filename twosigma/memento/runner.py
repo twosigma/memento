@@ -36,13 +36,14 @@ from .reference import FunctionReferenceWithArguments
 # The set of known runners. Register new runners using RunnerBackend.register.
 _registered_runner_backends = {}
 
-ExistingMementoResult = NamedTuple('ExistingMementoResult',
-                                   [('result', Any), ('valid_result', bool)])
+ExistingMementoResult = NamedTuple(
+    "ExistingMementoResult", [("result", Any), ("valid_result", bool)]
+)
 
 
-def process_existing_memento(storage_backend: StorageBackend,
-                             existing_memento: Memento,
-                             ignore_result: bool) -> ExistingMementoResult:
+def process_existing_memento(
+    storage_backend: StorageBackend, existing_memento: Memento, ignore_result: bool
+) -> ExistingMementoResult:
     """
     This logic is reused several times by runners when processing an existing
     memento for a function invocation.
@@ -66,8 +67,11 @@ def process_existing_memento(storage_backend: StorageBackend,
     try:
         # If result already exists, deserialize and return
         if ignore_result:
-            log.debug("Result of {} was already memoized and is ignored".format(
-                str(fn_reference_with_args)))
+            log.debug(
+                "Result of {} was already memoized and is ignored".format(
+                    str(fn_reference_with_args)
+                )
+            )
             return ExistingMementoResult(result=None, valid_result=True)
 
         # Unwrap exception from MementoException
@@ -77,12 +81,17 @@ def process_existing_memento(storage_backend: StorageBackend,
             log.warning("Processing a MemoizedException")
             result = e.to_exception()
 
-        log.info("Previous result for {} was memoized and is of type {}.".format(
-            str(fn_reference_with_args),
-            existing_memento.invocation_metadata.result_type.name))
+        log.info(
+            "Previous result for {} was memoized and is of type {}.".format(
+                str(fn_reference_with_args),
+                existing_memento.invocation_metadata.result_type.name,
+            )
+        )
         return ExistingMementoResult(result=result, valid_result=True)
     except IOError:
-        log.warning("IO Error while reading memoized result. Recomputing.", exc_info=True)
+        log.warning(
+            "IO Error while reading memoized result. Recomputing.", exc_info=True
+        )
         return ExistingMementoResult(result=None, valid_result=False)
 
 
@@ -111,9 +120,10 @@ class RunnerBackend(ABC):
         self.config = config
 
     @staticmethod
-    def ensure_correlation_id(context: InvocationContext,
-                              fn_reference_with_args: List[FunctionReferenceWithArguments]) ->\
-            InvocationContext:
+    def ensure_correlation_id(
+        context: InvocationContext,
+        fn_reference_with_args: List[FunctionReferenceWithArguments],
+    ) -> InvocationContext:
         """
         Utility method for subclasses to generate a new correlation id, if one is not already
         present.
@@ -121,16 +131,23 @@ class RunnerBackend(ABC):
         """
         if not context.recursive.correlation_id:
             correlation_id = "cid_" + uuid.uuid4().hex[0:12]
-            log.debug("{}: Generating new correlation id for {}".format(correlation_id,
-                                                                        fn_reference_with_args))
+            log.debug(
+                "{}: Generating new correlation id for {}".format(
+                    correlation_id, fn_reference_with_args
+                )
+            )
             return context.update_recursive("correlation_id", correlation_id)
         return context
 
     @abstractmethod
-    def batch_run(self, context: InvocationContext, storage_backend: StorageBackend,
-                  fn_reference_with_args: List[FunctionReferenceWithArguments],
-                  log_runner_backend: 'RunnerBackend',
-                  caller_memento: Optional[Memento]) -> List[Any]:
+    def batch_run(
+        self,
+        context: InvocationContext,
+        storage_backend: StorageBackend,
+        fn_reference_with_args: List[FunctionReferenceWithArguments],
+        log_runner_backend: "RunnerBackend",
+        caller_memento: Optional[Memento],
+    ) -> List[Any]:
         """
         Run a series of memento functions using this runner. If the runner is capable, these
         may be run in parallel.

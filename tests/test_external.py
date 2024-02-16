@@ -26,12 +26,20 @@ class SampleExternalMementoFunction(ExternalMementoFunctionBase):
         super().__init__(fn_reference, context, "test", hash_rules=list())
 
     def clone_with(
-            self, fn: Callable = None, src_fn: Callable = None, cluster_name: str = None,
-            version: str = None, calculated_version: str = None, context: InvocationContext = None,
-            partial_args: Tuple[Any] = None, partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, MementoFunctionType]] = None,
-            version_code_hash: str = None, version_salt: str = None) -> MementoFunctionType:
+        self,
+        fn: Callable = None,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        context: InvocationContext = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, MementoFunctionType]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+    ) -> MementoFunctionType:
         pass
 
 

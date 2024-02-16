@@ -25,7 +25,7 @@ from typing import List
 
 from twosigma.memento.reference import FunctionReferenceWithArgHash
 
-_MEMENTO_EXCEPTION_REGEX = r'([^:]*)::([^:]*):?([^:]*)'
+_MEMENTO_EXCEPTION_REGEX = r"([^:]*)::([^:]*):?([^:]*)"
 
 
 class MementoException(RuntimeError):
@@ -49,8 +49,10 @@ class MementoException(RuntimeError):
 
     def __init__(self, exception_name: str, message: str, stack_trace: str):
         super().__init__(
-            "{}: {}. Original stack trace follows:\n{}".format(exception_name, message,
-                                                               stack_trace))
+            "{}: {}. Original stack trace follows:\n{}".format(
+                exception_name, message, stack_trace
+            )
+        )
         self.exception_name = exception_name
         self.message = message
         self.stack_trace = stack_trace
@@ -80,8 +82,11 @@ class MementoException(RuntimeError):
                     return self
                 try:
                     # noinspection PyCallingNonCallable
-                    return ref("{}. Original stack trace follows:\n{}".format(self.message,
-                                                                              self.stack_trace))
+                    return ref(
+                        "{}. Original stack trace follows:\n{}".format(
+                            self.message, self.stack_trace
+                        )
+                    )
                 except TypeError:
                     # If we couldn't construct the exception (e.g. it has required parameters),
                     # just return this as a MementoException
@@ -107,8 +112,11 @@ class MementoException(RuntimeError):
         module = exc_class.__module__
         qual_name = exc_class.__qualname__
         full_qual_name = "{}::{}:{}".format(language, module, qual_name)
-        return MementoException(full_qual_name, str(e), "".join(
-            traceback.format_exception(type(e), e, e.__traceback__)))
+        return MementoException(
+            full_qual_name,
+            str(e),
+            "".join(traceback.format_exception(type(e), e, e.__traceback__)),
+        )
 
 
 class NonMemoizedException(RuntimeError):
@@ -126,6 +134,7 @@ class MementoNotFoundError(NonMemoizedException):
     but couldn't associate it with a Memento)
 
     """
+
     def __init__(self, message: str):
         super().__init__(message)
 

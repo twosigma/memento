@@ -49,7 +49,7 @@ def runner_fn_test_1(a, b, c=None, d=None, e=None, f=None):
         "c": c,
         "d": d,
         "e": e == runner_fn_test_1,
-        "f": (f[0]["a"] == runner_fn_test_1) if f is not None else None
+        "f": (f[0]["a"] == runner_fn_test_1) if f is not None else None,
     }
 
 

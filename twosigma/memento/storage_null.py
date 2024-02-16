@@ -18,8 +18,11 @@ Implements a storage backend that always returns null or None.
 """
 from typing import List, Iterable, Optional
 
-from .reference import FunctionReference, FunctionReferenceWithArguments, \
-    FunctionReferenceWithArgHash
+from .reference import (
+    FunctionReference,
+    FunctionReferenceWithArguments,
+    FunctionReferenceWithArgHash,
+)
 from .metadata import Memento
 from .storage import StorageBackend
 from .types import VersionedDataSourceKey
@@ -29,7 +32,9 @@ class NullStorageBackend(StorageBackend):
     def __init__(self, config: dict = None):
         super().__init__("null", config=config)
 
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         return [None] * len(fns)
 
     def read_result(self, memento: Memento) -> object:
@@ -38,13 +43,21 @@ class NullStorageBackend(StorageBackend):
     def make_url_for_result(self, memento: Memento) -> Optional[str]:
         raise ValueError("Null backend has no memoized results for any invocations")
 
-    def read_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                      retry_on_none=False) -> object:
+    def read_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        retry_on_none=False,
+    ) -> object:
         return None
 
-    def write_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                       value: bytes,
-                       store_with_content_key: Optional[VersionedDataSourceKey] = None):
+    def write_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        value: bytes,
+        store_with_content_key: Optional[VersionedDataSourceKey] = None,
+    ):
         pass
 
     def is_memoized(self, fn_reference: FunctionReference, arg_hash: str) -> bool:
@@ -73,9 +86,7 @@ class NullStorageBackend(StorageBackend):
         pass
 
     def to_dict(self):
-        config = {
-            "type": "null"
-        }
+        config = {"type": "null"}
         if self.read_only is not None:
             config["readonly"] = self.read_only
         return config

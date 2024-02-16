@@ -83,10 +83,13 @@ class RecursiveContext(ScopedContext):
     # Note: If additional attributes ar added, be sure to update
     # serialization.encode_recursive_context.
 
-    def __init__(self, correlation_id: str = None,
-                 retry_on_remote_call: bool = False,
-                 prevent_further_calls: bool = False,
-                 context_args: Dict[str, Any] = None) -> None:
+    def __init__(
+        self,
+        correlation_id: str = None,
+        retry_on_remote_call: bool = False,
+        prevent_further_calls: bool = False,
+        context_args: Dict[str, Any] = None,
+    ) -> None:
         super().__init__()
         self.__dict__["correlation_id"] = correlation_id
         self.__dict__["retry_on_remote_call"] = retry_on_remote_call
@@ -102,12 +105,12 @@ class RecursiveContext(ScopedContext):
     def __repr__(self):
         return "RecursiveContext({})".format(self.__dict__)
 
-    def copy(self) -> 'RecursiveContext':
+    def copy(self) -> "RecursiveContext":
         result = RecursiveContext()
         result.__dict__.update(self.__dict__)
         return result
 
-    def update(self, key: str, value: Any) -> 'RecursiveContext':
+    def update(self, key: str, value: Any) -> "RecursiveContext":
         if key not in self.__dict__:
             raise ValueError("No such property {}".format(key))
         result = self.copy()
@@ -140,10 +143,12 @@ class LocalContext(ScopedContext):
     of this result.
     """
 
-    def __init__(self,
-                 ignore_result: bool = False,
-                 force_local: bool = False,
-                 monitor_progress: bool = False) -> None:
+    def __init__(
+        self,
+        ignore_result: bool = False,
+        force_local: bool = False,
+        monitor_progress: bool = False,
+    ) -> None:
         super().__init__()
         self.__dict__["ignore_result"] = ignore_result
         self.__dict__["force_local"] = force_local
@@ -158,12 +163,12 @@ class LocalContext(ScopedContext):
     def __repr__(self):
         return "LocalContext({})".format(self.__dict__)
 
-    def copy(self) -> 'LocalContext':
+    def copy(self) -> "LocalContext":
         result = LocalContext()
         result.__dict__.update(self.__dict__)
         return result
 
-    def update(self, key: str, value: Any) -> 'LocalContext':
+    def update(self, key: str, value: Any) -> "LocalContext":
         if key not in self.__dict__:
             raise ValueError("No such property {}".format(key))
         result = self.copy()
@@ -180,7 +185,9 @@ class InvocationContext:
     recursive = None  # type: RecursiveContext
     local = None  # type: LocalContext
 
-    def __init__(self, recursive: RecursiveContext = None, local: LocalContext = None) -> None:
+    def __init__(
+        self, recursive: RecursiveContext = None, local: LocalContext = None
+    ) -> None:
         self.__dict__["recursive"] = recursive or RecursiveContext()
         self.__dict__["local"] = local or LocalContext()
 
@@ -190,14 +197,14 @@ class InvocationContext:
     def __str__(self):
         return "InvocationContext({}, {})".format(self.recursive, self.local)
 
-    def update_local(self, key: str, value: Any) -> 'InvocationContext':
+    def update_local(self, key: str, value: Any) -> "InvocationContext":
         """
         Create a copy of this context with the given property updated in the
         local part of the context.
         """
         return InvocationContext(self.recursive, self.local.update(key, value))
 
-    def update_recursive(self, key: str, value: Any) -> 'InvocationContext':
+    def update_recursive(self, key: str, value: Any) -> "InvocationContext":
         """
         Create a copy of this context with the given property updated in the
         recursive part of the context.

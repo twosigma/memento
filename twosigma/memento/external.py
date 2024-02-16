@@ -62,8 +62,12 @@ class ExternalMementoFunctionBase(MementoFunctionBase, ABC):
     _hash_rules = None  # type: List[HashRule]
 
     def __init__(
-            self, fn_reference: FunctionReference, context: InvocationContext,
-            function_type: str, hash_rules: List[HashRule]):
+        self,
+        fn_reference: FunctionReference,
+        context: InvocationContext,
+        function_type: str,
+        hash_rules: List[HashRule],
+    ):
         """
         Creates a new ExternalMementoFunction for the given function reference.
 
@@ -78,25 +82,44 @@ class ExternalMementoFunctionBase(MementoFunctionBase, ABC):
         parts = FunctionReference.parse_qualified_name(fn_reference.qualified_name)
         self._version = parts["version"]
         self.context = context
-        self.qualified_name_without_version = self._fn_reference.qualified_name_without_version
+        self.qualified_name_without_version = (
+            self._fn_reference.qualified_name_without_version
+        )
         self.code_hash = None
         self.function_type = function_type
         self._hash_rules = hash_rules
 
     def _clone_fn_ref(
-            self, fn: Callable = None, src_fn: Callable = None, cluster_name: str = None,
-            version: str = None, calculated_version: str = None,
-            partial_args: Tuple[Any] = None, partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, "MementoFunctionType"]] = None,
-            version_code_hash: str = None, version_salt: str = None) -> FunctionReference:
-        assert fn is None, "External function may not refer to a function in the local process"
-        assert src_fn is None, "External function may not refer to a source function in the " \
-                               "local process"
-        assert calculated_version is None, "External functions always have fixed versions"
-        assert auto_dependencies, "Cannot disable auto_dependencies for external functions"
+        self,
+        fn: Callable = None,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, "MementoFunctionType"]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+    ) -> FunctionReference:
+        assert (
+            fn is None
+        ), "External function may not refer to a function in the local process"
+        assert src_fn is None, (
+            "External function may not refer to a source function in the "
+            "local process"
+        )
+        assert (
+            calculated_version is None
+        ), "External functions always have fixed versions"
+        assert (
+            auto_dependencies
+        ), "Cannot disable auto_dependencies for external functions"
         assert dependencies is None, "Cannot set dependencies for external functions"
-        assert version_code_hash is None, "Cannot set version code hash for external functions"
+        assert (
+            version_code_hash is None
+        ), "Cannot set version code hash for external functions"
         assert version_salt is None, "Cannot set version_salt for external functions"
         return FunctionReference(
             memento_fn=self,
@@ -107,7 +130,7 @@ class ExternalMementoFunctionBase(MementoFunctionBase, ABC):
             module_name=self._fn_reference.module,
             function_name=self._fn_reference.function_name,
             parameter_names=self._fn_reference.parameter_names,
-            external=True
+            external=True,
         )
 
     def hash_rules(self) -> List[HashRule]:
@@ -120,7 +143,8 @@ class ExternalMementoFunctionBase(MementoFunctionBase, ABC):
         return self._fn_reference
 
     def dependencies(
-            self, verbose=False, label_filter: Callable[[str], str] = None) -> DependencyGraphType:
+        self, verbose=False, label_filter: Callable[[str], str] = None
+    ) -> DependencyGraphType:
         return DependencyGraph(self, verbose=verbose, label_filter=label_filter)
 
     def _filter_call(self, *args, **kwargs) -> Any:
@@ -149,7 +173,9 @@ class ExternalMementoFunctionBase(MementoFunctionBase, ABC):
         return "ExternalMementoFunction({})".format(repr(self.fn_reference()))
 
     @classmethod
-    def get_registered_function_type_classes(cls) -> Dict[str, type(MementoFunctionBase)]:
+    def get_registered_function_type_classes(
+        cls,
+    ) -> Dict[str, type(MementoFunctionBase)]:
         return _registered_function_type_classes
 
 
@@ -157,24 +183,32 @@ class UnboundExternalMementoFunction(ExternalMementoFunctionBase):
     """
     ExternalMementoFunction which is not bound to a particular server endpoint.
     """
+
     def __init__(
-            self,
-            context: Optional[InvocationContext] = None,
-            cluster_name: Optional[str] = None, module_name: Optional[str] = None,
-            function_name: Optional[str] = None, version: Optional[str] = None,
-            partial_args: Optional[Tuple[Any]] = None,
-            partial_kwargs: Optional[Dict[str, Any]] = None,
-            parameter_names: Optional[List[str]] = None,
-            fn_reference: Optional[FunctionReference] = None):
+        self,
+        context: Optional[InvocationContext] = None,
+        cluster_name: Optional[str] = None,
+        module_name: Optional[str] = None,
+        function_name: Optional[str] = None,
+        version: Optional[str] = None,
+        partial_args: Optional[Tuple[Any]] = None,
+        partial_kwargs: Optional[Dict[str, Any]] = None,
+        parameter_names: Optional[List[str]] = None,
+        fn_reference: Optional[FunctionReference] = None,
+    ):
         assert fn_reference or cluster_name is not None, "Cluster name is required"
 
         if fn_reference is None:
             fn_reference = FunctionReference(
                 memento_fn=self,
-                cluster_name=cluster_name, module_name=module_name,
-                function_name=function_name, version=version,
-                partial_args=partial_args, partial_kwargs=partial_kwargs,
-                parameter_names=parameter_names, external=True
+                cluster_name=cluster_name,
+                module_name=module_name,
+                function_name=function_name,
+                version=version,
+                partial_args=partial_args,
+                partial_kwargs=partial_kwargs,
+                parameter_names=parameter_names,
+                external=True,
             )
 
         if context is None:
@@ -183,21 +217,36 @@ class UnboundExternalMementoFunction(ExternalMementoFunctionBase):
         super().__init__(fn_reference, context, "unbound", hash_rules=list())
 
     def clone_with(
-            self, fn: Callable = None, src_fn: Callable = None, cluster_name: str = None,
-            version: str = None, calculated_version: str = None, context: InvocationContext = None,
-            partial_args: Tuple[Any] = None, partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, MementoFunctionType]] = None,
-            version_code_hash: str = None, version_salt: str = None) -> MementoFunctionType:
+        self,
+        fn: Callable = None,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        context: InvocationContext = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, MementoFunctionType]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+    ) -> MementoFunctionType:
         fn_ref = self._clone_fn_ref(
-            fn=fn, src_fn=src_fn, cluster_name=cluster_name, version=version,
-            calculated_version=calculated_version, partial_args=partial_args,
-            partial_kwargs=partial_kwargs, auto_dependencies=auto_dependencies,
-            dependencies=dependencies, version_code_hash=version_code_hash,
-            version_salt=version_salt
+            fn=fn,
+            src_fn=src_fn,
+            cluster_name=cluster_name,
+            version=version,
+            calculated_version=calculated_version,
+            partial_args=partial_args,
+            partial_kwargs=partial_kwargs,
+            auto_dependencies=auto_dependencies,
+            dependencies=dependencies,
+            version_code_hash=version_code_hash,
+            version_salt=version_salt,
         )
         return UnboundExternalMementoFunction(
-            context=context or self.context, fn_reference=fn_ref)
+            context=context or self.context, fn_reference=fn_ref
+        )
 
 
 ExternalMementoFunctionBase.register("unbound", UnboundExternalMementoFunction)

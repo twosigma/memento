@@ -27,8 +27,14 @@ from pandas import DataFrame
 
 import twosigma.memento as m
 from pandas.testing import assert_frame_equal
-from twosigma.memento import Environment, ConfigurationRepository, FunctionCluster, Memento, \
-    FunctionReference, MementoFunction
+from twosigma.memento import (
+    Environment,
+    ConfigurationRepository,
+    FunctionCluster,
+    Memento,
+    FunctionReference,
+    MementoFunction,
+)
 from twosigma.memento.metadata import ResultType
 from twosigma.memento.partition import InMemoryPartition
 from twosigma.memento.code_hash import fn_code_hash
@@ -126,8 +132,7 @@ def fn_test_memoize_7(a):
 def fn_test_memoize_df():
     global _called
     _called = True
-    return pd.DataFrame([{"name": "a", "value": 1},
-                         {"name": "b", "value": 2}])
+    return pd.DataFrame([{"name": "a", "value": 1}, {"name": "b", "value": 2}])
 
 
 # Turn off auto-dependencies, else global variable _called will introduce version change
@@ -413,7 +418,7 @@ class TestMemoize:
         self.env_before = m.Environment.get()
         self.env_dir = tempfile.mkdtemp(prefix="memoizeTest")
         env_file = "{}/env.json".format(self.env_dir)
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             print("""{"name": "test"}""", file=f)
         m.Environment.set(env_file)
         _called = False
@@ -425,21 +430,27 @@ class TestMemoize:
     def test_fn_reference(self):
         ref0a = m.FunctionReference(fn_test_memoize_0a)
         qual_name_0a = "tests.test_memento_function:fn_test_memoize_0a"
-        assert qual_name_0a == ref0a.qualified_name[0:ref0a.qualified_name.find("#")]
+        assert qual_name_0a == ref0a.qualified_name[0 : ref0a.qualified_name.find("#")]
         assert ref0a.cluster_name is None
 
         ref0a = m.FunctionReference.from_qualified_name(qual_name_0a)
-        assert qual_name_0a == ref0a.qualified_name[0:ref0a.qualified_name.find("#")]
+        assert qual_name_0a == ref0a.qualified_name[0 : ref0a.qualified_name.find("#")]
         assert ref0a.cluster_name is None
 
         ref0b = m.FunctionReference(fn_test_memoize_0b)
         qual_name_0b = "tests.test_memento_function:fn_test_memoize_0b"
-        assert "a::" + qual_name_0b == ref0b.qualified_name[0:ref0b.qualified_name.find("#")]
+        assert (
+            "a::" + qual_name_0b
+            == ref0b.qualified_name[0 : ref0b.qualified_name.find("#")]
+        )
         assert "a" == ref0b.cluster_name
 
         ref0b = m.FunctionReference.from_qualified_name("a::" + qual_name_0b)
         assert ref0b.memento_fn.version() is not None
-        assert "a::" + qual_name_0b == ref0b.qualified_name[0:ref0b.qualified_name.find("#")]
+        assert (
+            "a::" + qual_name_0b
+            == ref0b.qualified_name[0 : ref0b.qualified_name.find("#")]
+        )
         assert "a" == ref0b.cluster_name
 
     def test_memoize(self):
@@ -579,8 +590,7 @@ class TestMemoize:
 
         fn_test_memoize_df.forget_all()
 
-        expected = pd.DataFrame([{"name": "a", "value": 1},
-                                 {"name": "b", "value": 2}])
+        expected = pd.DataFrame([{"name": "a", "value": 1}, {"name": "b", "value": 2}])
 
         assert not _called
 
@@ -627,20 +637,59 @@ class TestMemoize:
         assert 2 == partition.get("b")
         assert _called
 
-        assert ResultType.null == fn_test_memoize_null.memento().invocation_metadata.result_type
-        assert ResultType.boolean == fn_test_memoize_boolean.memento().invocation_metadata.result_type
-        assert ResultType.string == fn_test_memoize_str.memento().invocation_metadata.result_type
-        assert ResultType.binary == fn_test_memoize_bin.memento().invocation_metadata.result_type
-        assert ResultType.number == fn_test_memoize_int.memento().invocation_metadata.result_type
-        assert ResultType.number == fn_test_memoize_float.memento().invocation_metadata.result_type
-        assert ResultType.date == fn_test_memoize_date.memento().invocation_metadata.result_type
-        assert ResultType.timestamp == fn_test_memoize_datetime.memento().invocation_metadata.result_type
-        assert ResultType.dictionary == fn_test_memoize_dict.memento().invocation_metadata.result_type
+        assert (
+            ResultType.null
+            == fn_test_memoize_null.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.boolean
+            == fn_test_memoize_boolean.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.string
+            == fn_test_memoize_str.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.binary
+            == fn_test_memoize_bin.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.number
+            == fn_test_memoize_int.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.number
+            == fn_test_memoize_float.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.date
+            == fn_test_memoize_date.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.timestamp
+            == fn_test_memoize_datetime.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.dictionary
+            == fn_test_memoize_dict.memento().invocation_metadata.result_type
+        )
         # note for future test maintainers: array would also be acceptable
-        assert ResultType.list_result == fn_test_memoize_list.memento().invocation_metadata.result_type
-        assert ResultType.series == fn_test_memoize_series.memento().invocation_metadata.result_type
-        assert ResultType.data_frame == fn_test_memoize_data_frame.memento().invocation_metadata.result_type
-        assert ResultType.partition == fn_test_memoize_partition.memento().invocation_metadata.result_type
+        assert (
+            ResultType.list_result
+            == fn_test_memoize_list.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.series
+            == fn_test_memoize_series.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.data_frame
+            == fn_test_memoize_data_frame.memento().invocation_metadata.result_type
+        )
+        assert (
+            ResultType.partition
+            == fn_test_memoize_partition.memento().invocation_metadata.result_type
+        )
 
     def test_robust_handling_of_io_error_during_memoization(self):
         global _called
@@ -653,9 +702,23 @@ class TestMemoize:
         try:
             # Use a path that is illegal on both Linux and Windows
             m.Environment.set(
-                Environment(name="bad_env", repos=[ConfigurationRepository(name="bad_repo", clusters={
-                    "bad_cluster": FunctionCluster(name="bad_cluster",
-                                                   storage=FilesystemStorageBackend(path="/proc/test<"))})]))
+                Environment(
+                    name="bad_env",
+                    repos=[
+                        ConfigurationRepository(
+                            name="bad_repo",
+                            clusters={
+                                "bad_cluster": FunctionCluster(
+                                    name="bad_cluster",
+                                    storage=FilesystemStorageBackend(
+                                        path="/proc/test<"
+                                    ),
+                                )
+                            },
+                        )
+                    ],
+                )
+            )
 
             _called = False
             assert "memoize me" == fn_test_memoize_string()
@@ -679,15 +742,25 @@ class TestMemoize:
         sample_a(datetime.date.today())
         sample_a(datetime.datetime.now(datetime.timezone.utc))
         sample_a([1, 2, 3])
-        multi_list = [None, True, "a", 1, 2.0, datetime.date.today(),
-                      datetime.datetime.now(datetime.timezone.utc),
-                      [1, 2, 3], {"a": "b", "c": "d"}]
+        multi_list = [
+            None,
+            True,
+            "a",
+            1,
+            2.0,
+            datetime.date.today(),
+            datetime.datetime.now(datetime.timezone.utc),
+            [1, 2, 3],
+            {"a": "b", "c": "d"},
+        ]
         sample_a(multi_list)
         sample_a({"a": "b", "c": "d"})
         sample_a({"a": "b", "c": multi_list})
         # Memento cannot serialize a function as a return value
         fn_test_fn_with_arg_noreturn(fn_test_memoize_0a)
-        fn_test_fn_with_arg_noreturn([1, 2, fn_test_memoize_0a, {"a": fn_test_memoize_0a}])
+        fn_test_fn_with_arg_noreturn(
+            [1, 2, fn_test_memoize_0a, {"a": fn_test_memoize_0a}]
+        )
 
         # These should not be accepted
         class CustomClass:
@@ -822,8 +895,10 @@ class TestMemoize:
         sample_b(2)
         fns = m.list_memoized_functions()
         assert 2 == len(fns)
-        expected_names = {FunctionReference(sample_a).qualified_name,
-                          FunctionReference(sample_b).qualified_name}
+        expected_names = {
+            FunctionReference(sample_a).qualified_name,
+            FunctionReference(sample_b).qualified_name,
+        }
         actual_names = set([x.qualified_name for x in fns])
         assert expected_names == actual_names
 
@@ -931,7 +1006,9 @@ class TestMemoize:
 
     def test_with_args(self):
         ref_a = fn_double.fn_reference().with_args(3)
-        assert fn_double.fn_reference().qualified_name == ref_a.fn_reference.qualified_name
+        assert (
+            fn_double.fn_reference().qualified_name == ref_a.fn_reference.qualified_name
+        )
         assert (3,) == ref_a.args
         assert {} == ref_a.kwargs
 
@@ -950,29 +1027,18 @@ class TestMemoize:
 
     def test_call_batch(self):
         # Make sure call_batch raises an error if kwarg keys are not strings
-        kwarg_list = [
-            {"x": 1, "y": 2},
-            {1: 2, "b": 4}
-        ]
+        kwarg_list = [{"x": 1, "y": 2}, {1: 2, "b": 4}]
         with pytest.raises(TypeError):
             add.call_batch(kwarg_list)
 
         # Try a successful call:
-        kwarg_list = [
-            {"x": 1, "y": 2},
-            {"x": 3, "y": 4}
-        ]
+        kwarg_list = [{"x": 1, "y": 2}, {"x": 3, "y": 4}]
         results = add.call_batch(kwarg_list)
         expected = [3, 7]
         assert expected == results
 
     def test_call_batch_raise_first_exception(self):
-        kwarg_list = [
-            {"x": 0},
-            {"x": 1},
-            {"x": 2},
-            {"x": 3}
-        ]
+        kwarg_list = [{"x": 0}, {"x": 1}, {"x": 2}, {"x": 3}]
         with pytest.raises(ValueError):
             fn_raise_on_odd.call_batch(kwarg_list)
 
@@ -985,21 +1051,21 @@ class TestMemoize:
 
     def test_monitor_progress(self):
         # Try a successful call:
-        kwarg_list = [
-            {"x": 1, "y": 2},
-            {"x": 3, "y": 4}
-        ]
+        kwarg_list = [{"x": 1, "y": 2}, {"x": 3, "y": 4}]
         results = add.monitor_progress().call_batch(kwarg_list)
         expected = [3, 7]
         assert expected == results
 
     def test_does_not_accept_local_functions(self):
         try:
+
             @m.memento_function
             def local_fn():
                 pass
 
-            pytest.fail("Should not have allowed declaration of a local memento function")
+            pytest.fail(
+                "Should not have allowed declaration of a local memento function"
+            )
         except ValueError:
             pass
 
@@ -1048,8 +1114,10 @@ class TestMemoize:
         finally:
             self.redefine_version(fn_current_time, "1")
 
-    @unittest.skipUnless((sys.version_info.major, sys.version_info.minor) == (3, 11),
-                         "Code hash test requires Python is 3.11")
+    @unittest.skipUnless(
+        (sys.version_info.major, sys.version_info.minor) == (3, 11),
+        "Code hash test requires Python is 3.11",
+    )
     def test_code_hash(self):
         """
         Test the stability of code hashing
@@ -1081,8 +1149,9 @@ class TestMemoize:
             assert f1.version() == f2.version()
 
             # Change the dependency of f2 and make sure version does change
-            f2 = m.memento_function(fn_unbound_2, version_code_hash=f1.code_hash,
-                                    dependencies=[sample_a])
+            f2 = m.memento_function(
+                fn_unbound_2, version_code_hash=f1.code_hash, dependencies=[sample_a]
+            )
             assert f1.version() != f2.version()
         finally:
             fn_unbound_2.__name__ = orig_fn_unbound_2_name
@@ -1110,23 +1179,21 @@ class TestMemoize:
 
         add(1, 1)
         df = add.list()
-        expected = DataFrame(data=[
-            {"x": 1, "y": 1, "result_type": "number"}
-        ])
+        expected = DataFrame(data=[{"x": 1, "y": 1, "result_type": "number"}])
         assert_frame_equal(expected, df)
 
         add(1, 2)
         df = add.list()
-        expected = DataFrame(data=[
-            {"x": 1, "y": 1, "result_type": "number"},
-            {"x": 1, "y": 2, "result_type": "number"}
-        ])
+        expected = DataFrame(
+            data=[
+                {"x": 1, "y": 1, "result_type": "number"},
+                {"x": 1, "y": 2, "result_type": "number"},
+            ]
+        )
         assert_frame_equal(expected, df)
 
         df = add.list(y=2)
-        expected = DataFrame(data=[
-            {"x": 1, "y": 2, "result_type": "number"}
-        ])
+        expected = DataFrame(data=[{"x": 1, "y": 2, "result_type": "number"}])
         assert_frame_equal(expected, df)
 
         assert add.list(y=3) is None

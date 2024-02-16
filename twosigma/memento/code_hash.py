@@ -70,7 +70,8 @@ def fn_code_hash(fn: Callable, salt: str = None, environment: bytes = None) -> s
                 o.co_names,
                 o.co_nlocals,
                 o.co_stacksize,
-                o.co_varnames]
+                o.co_varnames,
+            ]
             if salt:
                 sha256.update(salt.encode("utf-8"))
             sha256.update(json.dumps(attr_values, sort_keys=True).encode("utf-8"))
@@ -93,7 +94,9 @@ def fn_code_hash(fn: Callable, salt: str = None, environment: bytes = None) -> s
         return repr(fn)
 
 
-def resolve_to_symbolic_names(dependencies: List[Union[str, MementoFunctionType]]) -> Set[str]:
+def resolve_to_symbolic_names(
+    dependencies: List[Union[str, MementoFunctionType]]
+) -> Set[str]:
     """
     Takes a set of str and MementoFunctionType and resolves each to a symbolic name,
     represented as a str.
@@ -107,11 +110,13 @@ def resolve_to_symbolic_names(dependencies: List[Union[str, MementoFunctionType]
             return dep
         elif isinstance(dep, MementoFunctionType):
             q_name = dep.fn_reference().qualified_name
-            q_name = q_name[0:q_name.find("#")] if "#" in q_name else q_name
+            q_name = q_name[0 : q_name.find("#")] if "#" in q_name else q_name
             return q_name
         else:
-            raise ValueError("Each dependency must be either a str or "
-                             "MementoFunctionType. Got {}".format(dep))
+            raise ValueError(
+                "Each dependency must be either a str or "
+                "MementoFunctionType. Got {}".format(dep)
+            )
 
     return set(resolve_to_symbol(dep) for dep in dependencies)
 
@@ -153,6 +158,7 @@ def list_dotted_names(fn: Callable) -> Set[str]:
                 elif isinstance(n, ast.Name):
                     return n.id
                 return None
+
             eval_attr_result = eval_attr(node)
             if eval_attr_result is not None:
                 self.references.add(eval_attr_result)
@@ -181,8 +187,9 @@ def list_dotted_names(fn: Callable) -> Set[str]:
             result.difference_update(local_vars)
             # Also remove anything that dereferences a local variable
             to_remove = {
-                symbol for symbol in result
-                if "." in symbol and symbol[0:symbol.find(".")] in local_vars
+                symbol
+                for symbol in result
+                if "." in symbol and symbol[0 : symbol.find(".")] in local_vars
             }
             result.difference_update(to_remove)
 
@@ -203,6 +210,7 @@ class HashRule(ABC):
     that are detected to be called from that symbol.
 
     """
+
     all_rules = []  # type: List[Type[HashRule]]
     """All known HashRule instances, in order of evaluation"""
 
@@ -221,7 +229,9 @@ class HashRule(ABC):
     rule_hash = None  # type: Optional[str]
     """The hash computed for this hash rule, in the format of a hex string, or `None`"""
 
-    def __init__(self, key: str, parent_symbol: Optional[str], symbol: str, first_level: bool):
+    def __init__(
+        self, key: str, parent_symbol: Optional[str], symbol: str, first_level: bool
+    ):
         self.key = key
         self.parent_symbol = parent_symbol
         self.symbol = symbol
@@ -230,14 +240,20 @@ class HashRule(ABC):
 
     def describe(self) -> str:
         """Return a textual description of the component of the hash"""
-        return "{}{}{}".format(self.key,
-                               "#" + self.rule_hash[0:16] if self.rule_hash is not None else "",
-                               " (direct)" if self.first_level else "")
+        return "{}{}{}".format(
+            self.key,
+            "#" + self.rule_hash[0:16] if self.rule_hash is not None else "",
+            " (direct)" if self.first_level else "",
+        )
 
     @abstractmethod
-    def collect_transitive_dependencies(self, result: Set["HashRule"],
-                                        root_fn: MementoFunctionType,
-                                        package_scope: Set[str], blacklist: List[object]):
+    def collect_transitive_dependencies(
+        self,
+        result: Set["HashRule"],
+        root_fn: MementoFunctionType,
+        package_scope: Set[str],
+        blacklist: List[object],
+    ):
         """
         Analyze the entity behind this symbol and recursively descend to collect a full
         tree of transitive dependencies into the `results` variable. Cycles are broken by
@@ -274,10 +290,17 @@ class HashRule(ABC):
         pass
 
     @staticmethod
-    def _visit_dependency(result: Set["HashRule"], src_fn: Callable,
-                          parent_symbol: str, symbol: str, required: bool,
-                          root_fn: MementoFunctionType, first_level: bool,
-                          package_scope: Set[str], blacklist: List[object]):
+    def _visit_dependency(
+        result: Set["HashRule"],
+        src_fn: Callable,
+        parent_symbol: str,
+        symbol: str,
+        required: bool,
+        root_fn: MementoFunctionType,
+        first_level: bool,
+        package_scope: Set[str],
+        blacklist: List[object],
+    ):
         """
         Evaluates the given symbol (of the form a.b.c) using the globals scope of the provided
         function and adds a `HashRule` to the result set, if found. The `HashRule` also gets
@@ -311,15 +334,25 @@ class HashRule(ABC):
         # If ":" is in the symbol name, this is a qualified name from memento.
         # Construct via a FunctionReference
         if ":" in symbol:
+
             def memento_fn_resolver():
                 return FunctionReference.from_qualified_name(symbol).memento_fn
+
             memento_fn = memento_fn_resolver()
-            rule = MementoFunctionHashRule(parent_symbol=parent_symbol, symbol=symbol,
-                                           resolver=lambda: memento_fn_resolver,
-                                           obj=memento_fn, first_level=first_level)
+            rule = MementoFunctionHashRule(
+                parent_symbol=parent_symbol,
+                symbol=symbol,
+                resolver=lambda: memento_fn_resolver,
+                obj=memento_fn,
+                first_level=first_level,
+            )
             # collect_transitive_dependencies will add this rule to result
-            rule.collect_transitive_dependencies(result=result, root_fn=root_fn,
-                                                 package_scope=package_scope, blacklist=blacklist)
+            rule.collect_transitive_dependencies(
+                result=result,
+                root_fn=root_fn,
+                package_scope=package_scope,
+                blacklist=blacklist,
+            )
             return
 
         # Otherwise, treat this as a "dotted name" (e.g. a.b.c.fn())
@@ -328,11 +361,19 @@ class HashRule(ABC):
             if required:
                 raise DependencyNotFoundError(
                     "Could not find required dependency {} for function {}. "
-                    "Failed to resolve {} in global table.".
-                    format(symbol, src_fn.__name__, parts[0]))
-            result.add(UndefinedSymbolHashRule(global_table, parent_symbol=parent_symbol,
-                                               symbol=parts[0], first_level=first_level,
-                                               ref_is_global_table=True))
+                    "Failed to resolve {} in global table.".format(
+                        symbol, src_fn.__name__, parts[0]
+                    )
+                )
+            result.add(
+                UndefinedSymbolHashRule(
+                    global_table,
+                    parent_symbol=parent_symbol,
+                    symbol=parts[0],
+                    first_level=first_level,
+                    ref_is_global_table=True,
+                )
+            )
             return
 
         first_part = parts[0]
@@ -342,16 +383,18 @@ class HashRule(ABC):
 
         ref = resolver()
 
-        def resolve_symbol(parent_sym: str, sym: str, resolver_fn,
-                           reference: object) -> Optional[HashRule]:
+        def resolve_symbol(
+            parent_sym: str, sym: str, resolver_fn, reference: object
+        ) -> Optional[HashRule]:
             if any(x is reference for x in blacklist):
                 # Do not include some symbols (e.g. memento library itself)
                 return None
 
             for strategy in HashRule.all_rules:
                 # noinspection PyUnresolvedReferences
-                found = strategy.try_resolve(parent_sym, sym, resolver_fn,
-                                             reference, first_level=first_level)
+                found = strategy.try_resolve(
+                    parent_sym, sym, resolver_fn, reference, first_level=first_level
+                )
                 if found is not None:
                     return found
             return None
@@ -359,8 +402,12 @@ class HashRule(ABC):
         rule = resolve_symbol(parent_symbol, symbol, resolver, ref)
         if rule is not None:
             # collect_transitive_dependencies will add this rule to result
-            rule.collect_transitive_dependencies(result=result, root_fn=root_fn,
-                                                 package_scope=package_scope, blacklist=blacklist)
+            rule.collect_transitive_dependencies(
+                result=result,
+                root_fn=root_fn,
+                package_scope=package_scope,
+                blacklist=blacklist,
+            )
             return
 
         symbol_part = parts[0]
@@ -369,11 +416,19 @@ class HashRule(ABC):
                 if required:
                     raise DependencyNotFoundError(
                         "Could not find required dependency {} for function {}. "
-                        "Failed to resolve {}.{}.".
-                        format(symbol, src_fn.__name__, symbol_part, parts[i]))
-                result.add(UndefinedSymbolHashRule(ref, parent_symbol=parent_symbol,
-                                                   symbol=parts[i], first_level=first_level,
-                                                   ref_is_global_table=False))
+                        "Failed to resolve {}.{}.".format(
+                            symbol, src_fn.__name__, symbol_part, parts[i]
+                        )
+                    )
+                result.add(
+                    UndefinedSymbolHashRule(
+                        ref,
+                        parent_symbol=parent_symbol,
+                        symbol=parts[i],
+                        first_level=first_level,
+                        ref_is_global_table=False,
+                    )
+                )
                 return
             symbol_part += "."
             part_i = parts[i]
@@ -387,15 +442,19 @@ class HashRule(ABC):
             rule = resolve_symbol(parent_symbol, symbol_part, resolver, ref)
             if rule is not None:
                 # collect_transitive_dependencies will add this rule to result
-                rule.collect_transitive_dependencies(result=result, root_fn=root_fn,
-                                                     package_scope=package_scope,
-                                                     blacklist=blacklist)
+                rule.collect_transitive_dependencies(
+                    result=result,
+                    root_fn=root_fn,
+                    package_scope=package_scope,
+                    blacklist=blacklist,
+                )
                 return
 
         if required:
             raise DependencyNotFoundError(
                 "Could not find required dependency {} for function {}-{}. "
-                "No hash rules matched.".format(symbol, src_fn.__name__, symbol_part))
+                "No hash rules matched.".format(symbol, src_fn.__name__, symbol_part)
+            )
 
     @abstractmethod
     def clone(self) -> "HashRule":
@@ -429,20 +488,40 @@ class UndefinedSymbolHashRule(HashRule):
     ref_is_global_table = None  # type: bool
     """If true, ref is the global table, so we should use an `in` check instead of `hasattr`"""
 
-    def __init__(self, ref: object, parent_symbol: str, symbol: str, first_level: bool,
-                 ref_is_global_table: bool):
+    def __init__(
+        self,
+        ref: object,
+        parent_symbol: str,
+        symbol: str,
+        first_level: bool,
+        ref_is_global_table: bool,
+    ):
         # noinspection PyUnresolvedReferences
-        super().__init__(key="UndefinedSymbol;{};{}".format(parent_symbol, symbol),
-                         parent_symbol=parent_symbol, symbol=symbol, first_level=first_level)
+        super().__init__(
+            key="UndefinedSymbol;{};{}".format(parent_symbol, symbol),
+            parent_symbol=parent_symbol,
+            symbol=symbol,
+            first_level=first_level,
+        )
         self.ref = ref
         self.ref_is_global_table = ref_is_global_table
 
     def clone(self) -> HashRule:
-        return UndefinedSymbolHashRule(self.ref, self.parent_symbol, self.symbol,
-                                       self.first_level, self.ref_is_global_table)
+        return UndefinedSymbolHashRule(
+            self.ref,
+            self.parent_symbol,
+            self.symbol,
+            self.first_level,
+            self.ref_is_global_table,
+        )
 
-    def collect_transitive_dependencies(self, result: Set[HashRule], root_fn: MementoFunctionType,
-                                        package_scope: Set[str], blacklist: List[object]):
+    def collect_transitive_dependencies(
+        self,
+        result: Set[HashRule],
+        root_fn: MementoFunctionType,
+        package_scope: Set[str],
+        blacklist: List[object],
+    ):
         # An undefined symbol cannot have transitive dependencies
         pass
 
@@ -459,7 +538,8 @@ class UndefinedSymbolHashRule(HashRule):
 
     def __repr__(self):
         return "UndefinedSymbolHashRule(parent_symbol={parent_symbol}, symbol={symbol})".format(
-            parent_symbol=repr(self.parent_symbol), symbol=repr(self.symbol))
+            parent_symbol=repr(self.parent_symbol), symbol=repr(self.symbol)
+        )
 
 
 class MementoFunctionHashRule(HashRule):
@@ -467,40 +547,68 @@ class MementoFunctionHashRule(HashRule):
     Hash rule for the case where a variable points to a Memento Function
 
     """
+
     memento_fn = None  # type: MementoFunctionType
     resolver = None  # type: Callable
     parent_symbol = None  # type: str
 
     # noinspection PyUnusedLocal
     @staticmethod
-    def try_resolve(parent_symbol: str, symbol: str, resolver: Callable, ref: object,
-                    first_level: bool) -> \
-            Optional["MementoFunctionHashRule"]:
+    def try_resolve(
+        parent_symbol: str,
+        symbol: str,
+        resolver: Callable,
+        ref: object,
+        first_level: bool,
+    ) -> Optional["MementoFunctionHashRule"]:
         # Memento functions may be wrapped by decorators, so check each level of wrapping
         # to decide if this is a MementoFunctionType.
         while True:
             if isinstance(ref, MementoFunctionType):
-                return MementoFunctionHashRule(parent_symbol, symbol, resolver, ref, first_level)
+                return MementoFunctionHashRule(
+                    parent_symbol, symbol, resolver, ref, first_level
+                )
             elif hasattr(ref, "__wrapped__"):
                 ref = ref.__wrapped__
             else:
                 return None
 
-    def __init__(self, parent_symbol: Optional[str], symbol: str, resolver: Callable,
-                 obj: MementoFunctionType, first_level: bool):
+    def __init__(
+        self,
+        parent_symbol: Optional[str],
+        symbol: str,
+        resolver: Callable,
+        obj: MementoFunctionType,
+        first_level: bool,
+    ):
         # noinspection PyUnresolvedReferences
-        super().__init__(key="MementoFunction;{};{}".format(
-                         parent_symbol, obj.qualified_name_without_version),
-                         parent_symbol=parent_symbol, symbol=symbol, first_level=first_level)
+        super().__init__(
+            key="MementoFunction;{};{}".format(
+                parent_symbol, obj.qualified_name_without_version
+            ),
+            parent_symbol=parent_symbol,
+            symbol=symbol,
+            first_level=first_level,
+        )
         self.memento_fn = obj
         self.resolver = resolver
 
     def clone(self) -> "HashRule":
-        return MementoFunctionHashRule(self.parent_symbol, self.symbol, self.resolver,
-                                       self.memento_fn, self.first_level)
+        return MementoFunctionHashRule(
+            self.parent_symbol,
+            self.symbol,
+            self.resolver,
+            self.memento_fn,
+            self.first_level,
+        )
 
-    def collect_transitive_dependencies(self, result: Set[HashRule], root_fn: MementoFunctionType,
-                                        package_scope: Set[str], blacklist: List[object]):
+    def collect_transitive_dependencies(
+        self,
+        result: Set[HashRule],
+        root_fn: MementoFunctionType,
+        package_scope: Set[str],
+        blacklist: List[object],
+    ):
         # Make sure self is not already accounted for:
         if self in result:
             return
@@ -513,24 +621,37 @@ class MementoFunctionHashRule(HashRule):
         memento_fn = self.memento_fn
 
         for dep in memento_fn.required_dependencies:
-            HashRule._visit_dependency(result=result, src_fn=memento_fn.src_fn,
-                                       parent_symbol=memento_fn.qualified_name_without_version,
-                                       symbol=dep,
-                                       required=True, root_fn=root_fn,
-                                       first_level=memento_fn is root_fn,
-                                       package_scope=package_scope, blacklist=blacklist)
+            HashRule._visit_dependency(
+                result=result,
+                src_fn=memento_fn.src_fn,
+                parent_symbol=memento_fn.qualified_name_without_version,
+                symbol=dep,
+                required=True,
+                root_fn=root_fn,
+                first_level=memento_fn is root_fn,
+                package_scope=package_scope,
+                blacklist=blacklist,
+            )
 
         for dep in memento_fn.detected_dependencies:
-            HashRule._visit_dependency(result=result, src_fn=memento_fn.src_fn,
-                                       parent_symbol=memento_fn.qualified_name_without_version,
-                                       symbol=dep,
-                                       required=False, root_fn=root_fn,
-                                       first_level=memento_fn is root_fn,
-                                       package_scope=package_scope, blacklist=blacklist)
+            HashRule._visit_dependency(
+                result=result,
+                src_fn=memento_fn.src_fn,
+                parent_symbol=memento_fn.qualified_name_without_version,
+                symbol=dep,
+                required=False,
+                root_fn=root_fn,
+                first_level=memento_fn is root_fn,
+                package_scope=package_scope,
+                blacklist=blacklist,
+            )
 
     def compute_hash(self) -> Optional[str]:
-        return self.memento_fn.explicit_version \
-            if self.memento_fn.explicit_version is not None else self.memento_fn.code_hash
+        return (
+            self.memento_fn.explicit_version
+            if self.memento_fn.explicit_version is not None
+            else self.memento_fn.code_hash
+        )
 
     def did_change(self) -> bool:
         # Changes to the definition of a MementoFunctionType are more robust and detected using a
@@ -549,33 +670,64 @@ class GlobalVariableHashRule(HashRule):
     Hash rule for the case where a variable points to a global variable.
 
     """
+
     var = None  # type: object
     resolver = None  # type: Callable
     last_value = None  # type: bytes
 
     @staticmethod
-    def try_resolve(parent_symbol: str, symbol: str, resolver: Callable, ref: object,
-                    first_level: bool) \
-            -> Optional["GlobalVariableHashRule"]:
+    def try_resolve(
+        parent_symbol: str,
+        symbol: str,
+        resolver: Callable,
+        ref: object,
+        first_level: bool,
+    ) -> Optional["GlobalVariableHashRule"]:
         val = GlobalVariableHashRule._serialize_value(ref)
-        return GlobalVariableHashRule(parent_symbol, symbol, resolver, ref, val, first_level) \
-            if val is not None else None
+        return (
+            GlobalVariableHashRule(
+                parent_symbol, symbol, resolver, ref, val, first_level
+            )
+            if val is not None
+            else None
+        )
 
-    def __init__(self, parent_symbol: str, symbol: str, resolver: Callable, ref: object,
-                 last_value: bytes, first_level: bool):
-        super().__init__(key="GlobalVariable;{};{}".format(parent_symbol, symbol),
-                         parent_symbol=parent_symbol, symbol=symbol, first_level=first_level)
+    def __init__(
+        self,
+        parent_symbol: str,
+        symbol: str,
+        resolver: Callable,
+        ref: object,
+        last_value: bytes,
+        first_level: bool,
+    ):
+        super().__init__(
+            key="GlobalVariable;{};{}".format(parent_symbol, symbol),
+            parent_symbol=parent_symbol,
+            symbol=symbol,
+            first_level=first_level,
+        )
         self.var = ref
         self.resolver = resolver
         self.last_value = last_value
 
     def clone(self):
-        return GlobalVariableHashRule(self.parent_symbol, self.symbol, self.resolver,
-                                      self.var, self.last_value, self.first_level)
+        return GlobalVariableHashRule(
+            self.parent_symbol,
+            self.symbol,
+            self.resolver,
+            self.var,
+            self.last_value,
+            self.first_level,
+        )
 
-    def collect_transitive_dependencies(self, result: Set["HashRule"],
-                                        root_fn: MementoFunctionType,
-                                        package_scope: Set[str], blacklist: List[object]):
+    def collect_transitive_dependencies(
+        self,
+        result: Set["HashRule"],
+        root_fn: MementoFunctionType,
+        package_scope: Set[str],
+        blacklist: List[object],
+    ):
         # Variables cannot have transitive dependencies, so just add self and return
         result.add(self)
 
@@ -595,7 +747,9 @@ class GlobalVariableHashRule(HashRule):
     @staticmethod
     def _serialize_value(var: object) -> Optional[bytes]:
         try:
-            return json.dumps(MementoCodec.encode_arg(var), sort_keys=True).encode("utf-8")
+            return json.dumps(MementoCodec.encode_arg(var), sort_keys=True).encode(
+                "utf-8"
+            )
         except (TypeError, ValueError):
             # not a type that Memento understands or can hash. Do not hash.
             return None
@@ -612,31 +766,62 @@ class NonMementoFunctionHashRule(HashRule):
     Hash rule for the case where a variable points to a non-memento function.
 
     """
+
     src_fn = None  # type: Callable
     resolver = None  # type: Callable
 
     @staticmethod
-    def try_resolve(parent_symbol: str, symbol: str, resolver: Callable, ref: object,
-                    first_level: bool) -> \
-            Optional["NonMementoFunctionHashRule"]:
-        return NonMementoFunctionHashRule(parent_symbol, symbol, resolver, ref, first_level) \
-            if callable(ref) and hasattr(ref, "__globals__") else None
+    def try_resolve(
+        parent_symbol: str,
+        symbol: str,
+        resolver: Callable,
+        ref: object,
+        first_level: bool,
+    ) -> Optional["NonMementoFunctionHashRule"]:
+        return (
+            NonMementoFunctionHashRule(
+                parent_symbol, symbol, resolver, ref, first_level
+            )
+            if callable(ref) and hasattr(ref, "__globals__")
+            else None
+        )
 
-    def __init__(self, parent_symbol: str, symbol: str, resolver: Callable, obj: Callable,
-                 first_level: bool):
+    def __init__(
+        self,
+        parent_symbol: str,
+        symbol: str,
+        resolver: Callable,
+        obj: Callable,
+        first_level: bool,
+    ):
         # noinspection PyUnresolvedReferences
-        super().__init__(key="Function;{};{}".format(parent_symbol,
-                                                     obj.__module__ + ":" + obj.__qualname__),
-                         parent_symbol=parent_symbol, symbol=symbol, first_level=first_level)
+        super().__init__(
+            key="Function;{};{}".format(
+                parent_symbol, obj.__module__ + ":" + obj.__qualname__
+            ),
+            parent_symbol=parent_symbol,
+            symbol=symbol,
+            first_level=first_level,
+        )
         self.src_fn = obj
         self.resolver = resolver
 
     def clone(self) -> HashRule:
-        return NonMementoFunctionHashRule(self.parent_symbol, self.symbol, self.resolver,
-                                          self.src_fn, self.first_level)
+        return NonMementoFunctionHashRule(
+            self.parent_symbol,
+            self.symbol,
+            self.resolver,
+            self.src_fn,
+            self.first_level,
+        )
 
-    def collect_transitive_dependencies(self, result: Set[HashRule], root_fn: MementoFunctionType,
-                                        package_scope: Set[str], blacklist: List[object]):
+    def collect_transitive_dependencies(
+        self,
+        result: Set[HashRule],
+        root_fn: MementoFunctionType,
+        package_scope: Set[str],
+        blacklist: List[object],
+    ):
         # Make sure self is not already accounted for:
         if self in result:
             return
@@ -654,10 +839,17 @@ class NonMementoFunctionHashRule(HashRule):
         for dep in list_dotted_names(src_fn):
             # noinspection PyUnresolvedReferences
             symbol_parent = src_fn.__module__ + ":" + src_fn.__qualname__
-            HashRule._visit_dependency(result=result, src_fn=src_fn,
-                                       parent_symbol=symbol_parent, symbol=dep,
-                                       required=False, root_fn=root_fn, first_level=False,
-                                       package_scope=package_scope, blacklist=blacklist)
+            HashRule._visit_dependency(
+                result=result,
+                src_fn=src_fn,
+                parent_symbol=symbol_parent,
+                symbol=dep,
+                required=False,
+                root_fn=root_fn,
+                first_level=False,
+                package_scope=package_scope,
+                blacklist=blacklist,
+            )
 
     def compute_hash(self) -> Optional[str]:
         return fn_code_hash(self.src_fn)
@@ -678,5 +870,5 @@ class NonMementoFunctionHashRule(HashRule):
 HashRule.all_rules = [
     MementoFunctionHashRule,
     NonMementoFunctionHashRule,
-    GlobalVariableHashRule  # must go last
+    GlobalVariableHashRule,  # must go last
 ]

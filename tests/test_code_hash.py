@@ -23,7 +23,11 @@ import pytest
 from twosigma.memento import MementoFunction
 from twosigma.memento.exception import UndeclaredDependencyError
 from twosigma.memento import memento_function, Environment
-from twosigma.memento.code_hash import fn_code_hash, list_dotted_names, resolve_to_symbolic_names
+from twosigma.memento.code_hash import (
+    fn_code_hash,
+    list_dotted_names,
+    resolve_to_symbolic_names,
+)
 
 
 @memento_function()
@@ -79,6 +83,7 @@ _floating_fn = _non_memento_fn_1
 def dep_with_embedded_fn():
     def embedded_fn():
         return dep_b()
+
     return embedded_fn()
 
 
@@ -95,6 +100,7 @@ def fn_with_cell_vars():
     def inner():
         y = x
         return y
+
     return inner()
 
 
@@ -133,7 +139,7 @@ class TestCodeHash:
         self.env_before = Environment.get()
         self.env_dir = tempfile.mkdtemp(prefix="memoizeTest")
         env_file = "{}/env.json".format(self.env_dir)
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             print("""{"name": "test"}""", file=f)
         Environment.set(env_file)
 
@@ -195,19 +201,26 @@ class TestCodeHash:
         global _floating_fn
 
         try:
-            assert {dep_b} == dep_floating_fn.dependencies().transitive_memento_fn_dependencies()
+            assert {
+                dep_b
+            } == dep_floating_fn.dependencies().transitive_memento_fn_dependencies()
 
             version_before = dep_floating_fn.version()
             _floating_fn = _non_memento_fn_2
             version_after = dep_floating_fn.version()
             assert version_before != version_after
 
-            assert {dep_a, dep_b} == dep_floating_fn.dependencies().transitive_memento_fn_dependencies()
+            assert {
+                dep_a,
+                dep_b,
+            } == dep_floating_fn.dependencies().transitive_memento_fn_dependencies()
         finally:
             _floating_fn = _non_memento_fn_1
 
     def test_dep_with_embedded_fn(self):
-        assert {dep_b} == dep_with_embedded_fn.dependencies().transitive_memento_fn_dependencies()
+        assert {
+            dep_b
+        } == dep_with_embedded_fn.dependencies().transitive_memento_fn_dependencies()
 
     def test_redefine_memento_fn_as_non_memento_fn(self):
         """
@@ -254,14 +267,18 @@ class TestCodeHash:
         Make sure local variables are not included in the function hash
 
         """
-        assert not any("UndefinedSymbol;x" in r.describe() for r in fn_with_local_vars.hash_rules())
+        assert not any(
+            "UndefinedSymbol;x" in r.describe() for r in fn_with_local_vars.hash_rules()
+        )
 
     def test_fn_with_cell_vars(self):
         """
         Make sure cell variables are not included in the function hash
 
         """
-        assert not any("UndefinedSymbol;x" in r.describe() for r in fn_with_cell_vars.hash_rules())
+        assert not any(
+            "UndefinedSymbol;x" in r.describe() for r in fn_with_cell_vars.hash_rules()
+        )
 
     def test_cluster_lock_prevents_version_update(self):
         """
@@ -279,7 +296,9 @@ class TestCodeHash:
             assert prev_value == dep_global_var()
             global_var = prev_value + 1
             v2 = dep_floating_fn.version()
-            assert prev_value == dep_global_var()  # Should be memoized from previous call
+            assert (
+                prev_value == dep_global_var()
+            )  # Should be memoized from previous call
             assert v1 == v2
         finally:
             global_var = prev_value
@@ -303,6 +322,8 @@ class TestCodeHash:
         function.
 
         """
-        result = fn_calls_wrapped_one_plus_one.dependencies().transitive_memento_fn_dependencies()
+        result = (
+            fn_calls_wrapped_one_plus_one.dependencies().transitive_memento_fn_dependencies()
+        )
         # noinspection PyUnresolvedReferences
         assert {_wrapped_one_plus_one.__wrapped__} == result

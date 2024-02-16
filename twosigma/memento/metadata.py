@@ -27,33 +27,36 @@ from .logging import log
 from .resource import ResourceHandle
 from .exception import MementoException
 from .partition import Partition
-from .reference import FunctionReferenceWithArguments, FunctionReference, \
-    FunctionReferenceWithArgHash
+from .reference import (
+    FunctionReferenceWithArguments,
+    FunctionReference,
+    FunctionReferenceWithArgHash,
+)
 from .types import VersionedDataSourceKey, MementoFunctionType
 
 
 class ResultType(Enum):
-    exception = 0,
-    null = 1,
-    boolean = 2,
-    string = 3,
-    binary = 4,
-    number = 5,
-    date = 6,
-    timestamp = 7,
-    list_result = 8,  # list is a reserved word
-    dictionary = 9,
-    array_boolean = 10,
-    array_int8 = 11,
-    array_int16 = 12,
-    array_int32 = 13,
-    array_int64 = 14,
-    array_float32 = 15,
-    array_float64 = 16,
-    index = 17,
-    series = 18,
-    data_frame = 19,
-    partition = 20,
+    exception = (0,)
+    null = (1,)
+    boolean = (2,)
+    string = (3,)
+    binary = (4,)
+    number = (5,)
+    date = (6,)
+    timestamp = (7,)
+    list_result = (8,)  # list is a reserved word
+    dictionary = (9,)
+    array_boolean = (10,)
+    array_int8 = (11,)
+    array_int16 = (12,)
+    array_int32 = (13,)
+    array_int64 = (14,)
+    array_float32 = (15,)
+    array_float64 = (16,)
+    index = (17,)
+    series = (18,)
+    data_frame = (19,)
+    partition = (20,)
     memento_function = 21  # not a valid return type, but valid argument type
 
     @staticmethod
@@ -72,7 +75,9 @@ class ResultType(Enum):
             return ResultType.number
         if isinstance(obj, complex):
             raise ValueError("Memento cannot [de]serialize a complex")
-        if isinstance(obj, datetime.datetime):  # pd.Timestamp also extends datetime.datetime
+        if isinstance(
+            obj, datetime.datetime
+        ):  # pd.Timestamp also extends datetime.datetime
             return ResultType.timestamp
         if isinstance(obj, datetime.date):
             return ResultType.date
@@ -87,21 +92,23 @@ class ResultType(Enum):
         if isinstance(obj, pd.DataFrame):
             return ResultType.data_frame
         if isinstance(obj, np.ndarray):
-            if obj.dtype == 'bool':
+            if obj.dtype == "bool":
                 return ResultType.array_boolean
-            if obj.dtype == 'int8':
+            if obj.dtype == "int8":
                 return ResultType.array_int8
-            if obj.dtype == 'int16':
+            if obj.dtype == "int16":
                 return ResultType.array_int16
-            if obj.dtype == 'int32':
+            if obj.dtype == "int32":
                 return ResultType.array_int32
-            if obj.dtype == 'int64':
+            if obj.dtype == "int64":
                 return ResultType.array_int64
-            if obj.dtype == 'float32':
+            if obj.dtype == "float32":
                 return ResultType.array_float32
-            if obj.dtype == 'float64':
+            if obj.dtype == "float64":
                 return ResultType.array_float64
-            raise ValueError("Memento cannot [de]serialize a ndarray of type {}".format(obj.dtype))
+            raise ValueError(
+                "Memento cannot [de]serialize a ndarray of type {}".format(obj.dtype)
+            )
         if isinstance(obj, Partition):
             return ResultType.partition
         raise ValueError("Memento cannot [de]serialize a {}".format(type(obj)))
@@ -180,18 +187,22 @@ class InvocationMetadata:
     result_type = None  # type: Optional[ResultType]
 
     def __sizeof__(self):
-        return sys.getsizeof(self.fn_reference_with_args) + \
-            sum([sys.getsizeof(x) for x in self.invocations]) + \
-            sum([sys.getsizeof(x) for x in self.resources]) + \
-            sys.getsizeof(self.runtime) + \
-            sys.getsizeof(self.result_type)
+        return (
+            sys.getsizeof(self.fn_reference_with_args)
+            + sum([sys.getsizeof(x) for x in self.invocations])
+            + sum([sys.getsizeof(x) for x in self.resources])
+            + sys.getsizeof(self.runtime)
+            + sys.getsizeof(self.result_type)
+        )
 
-    def __init__(self,
-                 fn_reference_with_args: FunctionReferenceWithArguments,
-                 invocations: List[FunctionReferenceWithArguments],
-                 resources: List[ResourceHandle],
-                 runtime: Optional[datetime.timedelta],
-                 result_type: Optional[ResultType]):
+    def __init__(
+        self,
+        fn_reference_with_args: FunctionReferenceWithArguments,
+        invocations: List[FunctionReferenceWithArguments],
+        resources: List[ResourceHandle],
+        runtime: Optional[datetime.timedelta],
+        result_type: Optional[ResultType],
+    ):
         self.fn_reference_with_args = fn_reference_with_args
         self.invocations = invocations
         self.resources = resources
@@ -199,9 +210,15 @@ class InvocationMetadata:
         self.result_type = result_type
 
     def __repr__(self):
-        return "InvocationMetadata(fn_reference_with_args={}, invocations={}, runtime={}, " \
-               "result_type={})".format(repr(self.fn_reference_with_args), repr(self.invocations),
-                                        repr(self.runtime), repr(self.result_type))
+        return (
+            "InvocationMetadata(fn_reference_with_args={}, invocations={}, runtime={}, "
+            "result_type={})".format(
+                repr(self.fn_reference_with_args),
+                repr(self.invocations),
+                repr(self.runtime),
+                repr(self.result_type),
+            )
+        )
 
     def __str__(self):
         return self.__repr__()
@@ -231,13 +248,15 @@ class Memento:
     content_key = None  # type: Optional[VersionedDataSourceKey]
     """If specified, this key overrides the default key for a Memento result"""
 
-    def __init__(self,
-                 time: datetime.datetime,
-                 invocation_metadata: InvocationMetadata,
-                 function_dependencies: MutableSet[FunctionReference],
-                 runner: Dict[str, object],
-                 correlation_id: str,
-                 content_key: Optional[VersionedDataSourceKey]):
+    def __init__(
+        self,
+        time: datetime.datetime,
+        invocation_metadata: InvocationMetadata,
+        function_dependencies: MutableSet[FunctionReference],
+        runner: Dict[str, object],
+        correlation_id: str,
+        content_key: Optional[VersionedDataSourceKey],
+    ):
         """
         Creates a new Memento, tracking the metadata for the function invocation.
 
@@ -266,6 +285,7 @@ class Memento:
         """
 
         from .configuration import Environment
+
         env = Environment.get()
 
         fn_reference_with_args = self.invocation_metadata.fn_reference_with_args
@@ -275,7 +295,11 @@ class Memento:
 
         # Forget only the results for the provided parameters
         arg_hash = fn_reference_with_args.fn_reference_with_arg_hash()
-        log.info("Forgetting {} for arg hash {}".format(fn_reference.qualified_name, arg_hash))
+        log.info(
+            "Forgetting {} for arg hash {}".format(
+                fn_reference.qualified_name, arg_hash
+            )
+        )
         storage_backend.forget_call(arg_hash)
 
     def forget_exceptions_recursively(self, dry_run=False):
@@ -298,6 +322,7 @@ class Memento:
         """
 
         from .configuration import Environment
+
         env = Environment.get()
 
         warned = set()  # type: Set[str]
@@ -310,12 +335,15 @@ class Memento:
             if result is None:
                 if cluster_name not in warned:
                     warned.add(cluster_name)
-                    log.warning(f"Cannot find cluster {cluster_name} in default environment")
+                    log.warning(
+                        f"Cannot find cluster {cluster_name} in default environment"
+                    )
             return result
 
         @lru_cache(maxsize=10240)
         def get_memento(
-                cluster_storage, fn_with_arg_hash: FunctionReferenceWithArgHash) -> Memento:
+            cluster_storage, fn_with_arg_hash: FunctionReferenceWithArgHash
+        ) -> Memento:
             return cluster_storage.get_memento(fn_with_arg_hash)
 
         def add_result(invocation: InvocationMetadata):
@@ -327,7 +355,9 @@ class Memento:
             for inv in invocation.invocations:
                 fn_cluster = get_cluster(inv.fn_reference)
                 if fn_cluster is not None:
-                    memento = get_memento(fn_cluster.storage, inv.fn_reference_with_arg_hash())
+                    memento = get_memento(
+                        fn_cluster.storage, inv.fn_reference_with_arg_hash()
+                    )
                     if memento is not None:
                         add_result(memento.invocation_metadata)
 
@@ -337,7 +367,9 @@ class Memento:
             if not dry_run:
                 cluster = get_cluster(fn_with_args.fn_reference)
                 if cluster is not None:
-                    cluster.storage.forget_call(fn_with_args.fn_reference_with_arg_hash())
+                    cluster.storage.forget_call(
+                        fn_with_args.fn_reference_with_arg_hash()
+                    )
             log.warning(f"{'Would forget' if dry_run else 'Forgot'} {fn_with_args}")
 
     def trace(self, max_depth=None, only_exceptions=False) -> str:
@@ -350,6 +382,7 @@ class Memento:
         """
 
         from .configuration import Environment
+
         env = Environment.get()
 
         warned = set()  # type: Set[str]
@@ -361,11 +394,15 @@ class Memento:
             """
             return "{}({}) [{}] -> {}".format(
                 m.fn_reference_with_args.fn_reference.qualified_name,
-                _label_fn_ref_args(m.fn_reference_with_args), m.runtime, str(m.result_type))
+                _label_fn_ref_args(m.fn_reference_with_args),
+                m.runtime,
+                str(m.result_type),
+            )
 
         @lru_cache(maxsize=10240)
         def get_memento(
-                cluster_storage, fn_with_arg_hash: FunctionReferenceWithArgHash) -> Memento:
+            cluster_storage, fn_with_arg_hash: FunctionReferenceWithArgHash
+        ) -> Memento:
             return cluster_storage.get_memento(fn_with_arg_hash)
 
         def add_row(rows: List[str], indent: int, invocation: InvocationMetadata):
@@ -377,16 +414,29 @@ class Memento:
                 if cluster is None:
                     if cluster_name not in warned:
                         warned.add(cluster_name)
-                        log.warning(f"Cannot find cluster {cluster_name} in default environment")
+                        log.warning(
+                            f"Cannot find cluster {cluster_name} in default environment"
+                        )
                 elif max_depth is None or indent < (max_depth - 1):
-                    memento = get_memento(cluster.storage, invocation.fn_reference_with_arg_hash())
-                    if memento is not None and (not only_exceptions or memento.
-                                                invocation_metadata.
-                                                result_type == ResultType.exception):
+                    memento = get_memento(
+                        cluster.storage, invocation.fn_reference_with_arg_hash()
+                    )
+                    if memento is not None and (
+                        not only_exceptions
+                        or memento.invocation_metadata.result_type
+                        == ResultType.exception
+                    ):
                         add_row(rows, indent + 1, memento.invocation_metadata)
-                elif not only_exceptions and (max_depth is not None and indent >= (max_depth - 1)):
-                    rows.append((" " * ((indent + 1) * 4)) + "{}({})".format(
-                        invocation.fn_reference.qualified_name, _label_fn_ref_args(invocation)))
+                elif not only_exceptions and (
+                    max_depth is not None and indent >= (max_depth - 1)
+                ):
+                    rows.append(
+                        (" " * ((indent + 1) * 4))
+                        + "{}({})".format(
+                            invocation.fn_reference.qualified_name,
+                            _label_fn_ref_args(invocation),
+                        )
+                    )
 
         result_rows = []
         add_row(result_rows, 0, self.invocation_metadata)
@@ -402,23 +452,27 @@ class Memento:
         """
 
         from .configuration import Environment
+
         env = Environment.get()
 
-        graph = graphviz.Digraph(graph_attr={"rankdir": "LR", "splines": "ortho"},
-                                 node_attr={"shape": "box", "fontname": "Helvetica",
-                                            "fontsize": "10"})
+        graph = graphviz.Digraph(
+            graph_attr={"rankdir": "LR", "splines": "ortho"},
+            node_attr={"shape": "box", "fontname": "Helvetica", "fontsize": "10"},
+        )
 
         node_id_holder = [0]
         warned = set()  # type: Set[str]
 
         @lru_cache(maxsize=10240)
         def get_memento(
-                cluster_storage, fn_with_arg_hash: FunctionReferenceWithArgHash) -> Memento:
+            cluster_storage, fn_with_arg_hash: FunctionReferenceWithArgHash
+        ) -> Memento:
             return cluster_storage.get_memento(fn_with_arg_hash)
 
         def graph_node(
-                fn_reference_with_args: FunctionReferenceWithArguments,
-                m: Optional[InvocationMetadata]):
+            fn_reference_with_args: FunctionReferenceWithArguments,
+            m: Optional[InvocationMetadata],
+        ):
             node_id_holder[0] += 1
             node_id = "n" + str(node_id_holder[0])
             kwarg_str = _label_fn_ref_args(fn_reference_with_args)
@@ -428,13 +482,18 @@ class Memento:
                 kwarg_short = kwarg_str[0:max_len] + "..."
             if m is not None:
                 label = "{}({})\n-> {}\n{}".format(
-                    fn_reference_with_args.fn_reference.function_name, kwarg_short,
-                    m.result_type.name, m.runtime)
+                    fn_reference_with_args.fn_reference.function_name,
+                    kwarg_short,
+                    m.result_type.name,
+                    m.runtime,
+                )
             else:
                 label = "{}({})".format(
-                    fn_reference_with_args.fn_reference.function_name, kwarg_short)
-            tooltip = "{}({})".format(fn_reference_with_args.fn_reference.function_name,
-                                      kwarg_str)
+                    fn_reference_with_args.fn_reference.function_name, kwarg_short
+                )
+            tooltip = "{}({})".format(
+                fn_reference_with_args.fn_reference.function_name, kwarg_str
+            )
             graph.node(node_id, label=label, tooltip=tooltip)
             return node_id
 
@@ -447,17 +506,25 @@ class Memento:
                 if cluster is None:
                     if cluster_name not in warned:
                         warned.add(cluster_name)
-                        log.warning(f"Cannot find cluster {cluster_name} in default environment")
+                        log.warning(
+                            f"Cannot find cluster {cluster_name} in default environment"
+                        )
                 elif max_depth is None or depth < (max_depth - 1):
                     cluster_storage = cluster.storage
-                    memento = get_memento(cluster_storage, invocation.fn_reference_with_arg_hash())
+                    memento = get_memento(
+                        cluster_storage, invocation.fn_reference_with_arg_hash()
+                    )
 
-                    if memento is not None and (not only_exceptions or memento.
-                                                invocation_metadata.
-                                                result_type == ResultType.exception):
+                    if memento is not None and (
+                        not only_exceptions
+                        or memento.invocation_metadata.result_type
+                        == ResultType.exception
+                    ):
                         other_node_id = add_node(memento.invocation_metadata, depth + 1)
                         graph.edge(node_id, other_node_id)
-                elif not only_exceptions and (max_depth is not None and depth >= (max_depth - 1)):
+                elif not only_exceptions and (
+                    max_depth is not None and depth >= (max_depth - 1)
+                ):
                     other_node_id = graph_node(invocation, None)
                     graph.edge(node_id, other_node_id)
 
@@ -468,18 +535,26 @@ class Memento:
         return graph
 
     def __sizeof__(self):
-        return sys.getsizeof(self.time) +\
-            sys.getsizeof(self.invocation_metadata) +\
-            sys.getsizeof(self.runner) +\
-            sys.getsizeof(self.correlation_id) +\
-            sys.getsizeof(self.content_key)
+        return (
+            sys.getsizeof(self.time)
+            + sys.getsizeof(self.invocation_metadata)
+            + sys.getsizeof(self.runner)
+            + sys.getsizeof(self.correlation_id)
+            + sys.getsizeof(self.content_key)
+        )
 
     def __repr__(self):
-        return "Memento(time={}, invocation_metadata={}, function_dependencies={}, runner={}, " \
-               "correlation_id={}, content_key={})". \
-            format(repr(self.time), repr(self.invocation_metadata),
-                   repr(self.function_dependencies), repr(self.runner), repr(self.correlation_id),
-                   repr(self.content_key))
+        return (
+            "Memento(time={}, invocation_metadata={}, function_dependencies={}, runner={}, "
+            "correlation_id={}, content_key={})".format(
+                repr(self.time),
+                repr(self.invocation_metadata),
+                repr(self.function_dependencies),
+                repr(self.runner),
+                repr(self.correlation_id),
+                repr(self.content_key),
+            )
+        )
 
     def __str__(self):
         return self.__repr__()

@@ -28,7 +28,8 @@ class TestMetadata:
 
     def test_result_type_from_object(self):
         assert ResultType.exception == ResultType.from_object(
-            MementoException("python::builtins:ValueError", "message", "stack_trace"))
+            MementoException("python::builtins:ValueError", "message", "stack_trace")
+        )
         assert ResultType.null == ResultType.from_object(None)
         assert ResultType.boolean == ResultType.from_object(True)
         assert ResultType.string == ResultType.from_object("foo")
@@ -37,22 +38,41 @@ class TestMetadata:
         assert ResultType.number == ResultType.from_object(1.2)
         with pytest.raises(ValueError):
             ResultType.from_object((3 + 4j))
-        assert ResultType.timestamp == ResultType.from_object(datetime.datetime.now(datetime.timezone.utc))
+        assert ResultType.timestamp == ResultType.from_object(
+            datetime.datetime.now(datetime.timezone.utc)
+        )
         assert ResultType.date == ResultType.from_object(datetime.date.today())
         assert ResultType.list_result == ResultType.from_object([1, 2])
         assert ResultType.dictionary == ResultType.from_object({"a": "b"})
         assert ResultType.index == ResultType.from_object(pd.Index([1, 2]))
         assert ResultType.series == ResultType.from_object(pd.Series([1, 2]))
-        assert ResultType.data_frame == ResultType.from_object(pd.DataFrame({"a": [1, 2]}))
+        assert ResultType.data_frame == ResultType.from_object(
+            pd.DataFrame({"a": [1, 2]})
+        )
         assert ResultType.array_boolean == ResultType.from_object(
-            np.array([True, False], dtype=np.dtype("?")))
-        assert ResultType.array_int8 == ResultType.from_object(np.array([1, 2], dtype=np.dtype("i1")))
-        assert ResultType.array_int16 == ResultType.from_object(np.array([1, 2], dtype=np.dtype("i2")))
-        assert ResultType.array_int32 == ResultType.from_object(np.array([1, 2], dtype=np.dtype("i4")))
-        assert ResultType.array_int64 == ResultType.from_object(np.array([1, 2], dtype=np.dtype("i8")))
-        assert ResultType.array_float32 == ResultType.from_object(np.array([1, 2], dtype=np.dtype("f4")))
-        assert ResultType.array_float64 == ResultType.from_object(np.array([1, 2], dtype=np.dtype("f8")))
-        assert ResultType.partition == ResultType.from_object(InMemoryPartition({"a": 1}))
+            np.array([True, False], dtype=np.dtype("?"))
+        )
+        assert ResultType.array_int8 == ResultType.from_object(
+            np.array([1, 2], dtype=np.dtype("i1"))
+        )
+        assert ResultType.array_int16 == ResultType.from_object(
+            np.array([1, 2], dtype=np.dtype("i2"))
+        )
+        assert ResultType.array_int32 == ResultType.from_object(
+            np.array([1, 2], dtype=np.dtype("i4"))
+        )
+        assert ResultType.array_int64 == ResultType.from_object(
+            np.array([1, 2], dtype=np.dtype("i8"))
+        )
+        assert ResultType.array_float32 == ResultType.from_object(
+            np.array([1, 2], dtype=np.dtype("f4"))
+        )
+        assert ResultType.array_float64 == ResultType.from_object(
+            np.array([1, 2], dtype=np.dtype("f8"))
+        )
+        assert ResultType.partition == ResultType.from_object(
+            InMemoryPartition({"a": 1})
+        )
 
     def test_result_type_from_annotation(self):
         assert ResultType.exception == ResultType.from_annotation(MementoException)
@@ -76,4 +96,6 @@ class TestMetadata:
         assert ResultType.data_frame == ResultType.from_annotation(pd.DataFrame)
         # Not sure how to represent np.ndarray type hints
         assert ResultType.partition == ResultType.from_annotation(InMemoryPartition)
-        assert ResultType.memento_function == ResultType.from_annotation(MementoFunction)
+        assert ResultType.memento_function == ResultType.from_annotation(
+            MementoFunction
+        )

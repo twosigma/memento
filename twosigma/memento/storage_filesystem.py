@@ -40,8 +40,13 @@ from .logging import log
 from .metadata import ResultType
 from .partition import Partition
 from .storage import StorageBackend
-from .storage_base import DataSource, DataSourceMetadataSource, StorageBackendBase, DefaultCodec, \
-    Codec
+from .storage_base import (
+    DataSource,
+    DataSourceMetadataSource,
+    StorageBackendBase,
+    DefaultCodec,
+    Codec,
+)
 from .types import DataSourceKey, VersionedDataSourceKey
 
 
@@ -78,12 +83,16 @@ class _FilesystemDataSource(DataSource):
             f.write(str(versioned_path))
 
     def _delete_non_versioned_link(self, key: DataSourceKey):
-        non_versioned_path = self._get_non_versioned_link_path(self._escape_key(key.key))
+        non_versioned_path = self._get_non_versioned_link_path(
+            self._escape_key(key.key)
+        )
         if os.path.isfile(non_versioned_path):
             os.unlink(non_versioned_path)
 
     def _read_non_versioned_link(self, key: DataSourceKey) -> Path:
-        non_versioned_path = self._get_non_versioned_link_path(self._escape_key(key.key))
+        non_versioned_path = self._get_non_versioned_link_path(
+            self._escape_key(key.key)
+        )
         with open(str(non_versioned_path), "r") as f:
             versioned_path = Path(f.read())
         return versioned_path
@@ -93,8 +102,9 @@ class _FilesystemDataSource(DataSource):
         dirname = path.parent
         return dirname.joinpath(".versions")
 
-    def _get_path_versioned(self, key: VersionedDataSourceKey,
-                            metadata_key: Optional[str] = None) -> Path:
+    def _get_path_versioned(
+        self, key: VersionedDataSourceKey, metadata_key: Optional[str] = None
+    ) -> Path:
         escaped_key = self._escape_key(key.key)
         dirname = os.path.dirname(escaped_key)
         basename = os.path.basename(escaped_key)
@@ -116,7 +126,9 @@ class _FilesystemDataSource(DataSource):
     def input_versioned(self, key: VersionedDataSourceKey) -> IO:
         return self._do_input(self._get_path_versioned(key))
 
-    def input_metadata(self, content_key: VersionedDataSourceKey, metadata_key: str) -> bytes:
+    def input_metadata(
+        self, content_key: VersionedDataSourceKey, metadata_key: str
+    ) -> bytes:
         path = self._get_path_versioned(content_key, metadata_key=metadata_key)
         with self._do_input(path) as f:
             return f.read()
@@ -131,7 +143,9 @@ class _FilesystemDataSource(DataSource):
         return result
 
     def exists_nonversioned(self, key: DataSourceKey) -> bool:
-        non_versioned_path = self._get_non_versioned_link_path(self._escape_key(key.key))
+        non_versioned_path = self._get_non_versioned_link_path(
+            self._escape_key(key.key)
+        )
         if not os.path.exists(non_versioned_path):
             result = False
         else:
@@ -157,14 +171,21 @@ class _FilesystemDataSource(DataSource):
         self._write_non_versioned_link(versioned_key)
         return versioned_key
 
-    def reference(self, src_data_source: DataSource, src_key: VersionedDataSourceKey,
-                  target_key: VersionedDataSourceKey):
+    def reference(
+        self,
+        src_data_source: DataSource,
+        src_key: VersionedDataSourceKey,
+        target_key: VersionedDataSourceKey,
+    ):
         # This data source does not perform reference counting
         pass
 
-    def output_metadata(self, content_key: VersionedDataSourceKey, metadata_key: str,
-                        value: bytes):
-        versioned_path = self._get_path_versioned(content_key, metadata_key=metadata_key)
+    def output_metadata(
+        self, content_key: VersionedDataSourceKey, metadata_key: str, value: bytes
+    ):
+        versioned_path = self._get_path_versioned(
+            content_key, metadata_key=metadata_key
+        )
         log.debug("Writing {}".format(versioned_path))
         with versioned_path.open(mode="wb") as f:
             f.write(value)
@@ -210,39 +231,53 @@ class _FilesystemDataSource(DataSource):
                     path.rmdir()
                 path = path.parent
 
-    def list_keys_nonversioned(self, directory: DataSourceKey, file_prefix: str = "",
-                               recursive: bool = False, limit: int = None,
-                               endswith: str = None) -> Iterable[DataSourceKey]:
+    def list_keys_nonversioned(
+        self,
+        directory: DataSourceKey,
+        file_prefix: str = "",
+        recursive: bool = False,
+        limit: int = None,
+        endswith: str = None,
+    ) -> Iterable[DataSourceKey]:
         dir_path = self._get_non_versioned_path(directory)
         if not dir_path.is_dir():
             return []
         escaped_key = self._escape_key(directory.key)
-        dir_prefix = (escaped_key + "/") if escaped_key and not escaped_key.endswith("/") else ""
+        dir_prefix = (
+            (escaped_key + "/") if escaped_key and not escaped_key.endswith("/") else ""
+        )
         if recursive:
+
             def walk_path_recursive():
                 count = 0
                 dir_path_str = str(dir_path)
                 for dirpath, dirname, filenames in os.walk(dir_path_str):
-                    if "{}.versions{}".format(os.sep, os.sep) in dirpath or \
-                            "{}.tmp{}".format(os.sep, os.sep) in dirpath:
+                    if (
+                        "{}.versions{}".format(os.sep, os.sep) in dirpath
+                        or "{}.tmp{}".format(os.sep, os.sep) in dirpath
+                    ):
                         continue
                     for filename in filenames:
-                        entry = dir_prefix + os.path.join(
-                            dirpath, filename)[len(dir_path_str) + 1:]
+                        entry = (
+                            dir_prefix
+                            + os.path.join(dirpath, filename)[len(dir_path_str) + 1 :]
+                        )
                         if entry.endswith(".link"):
                             entry = entry[0:-5]  # strip .link off end of string
                         # Filter down to files that begin with file_prefix
                         if os.path.basename(entry).startswith(file_prefix):
-                            if endswith is not None and not os.path.basename(entry).endswith(
-                                    endswith):
+                            if endswith is not None and not os.path.basename(
+                                entry
+                            ).endswith(endswith):
                                 continue
                             count += 1
-                            yield DataSourceKey(entry.replace(os.sep, '/'))
+                            yield DataSourceKey(entry.replace(os.sep, "/"))
                             if count == limit:
                                 return
 
             entries = list(walk_path_recursive())
         else:
+
             def walk_path():
                 count = 0
                 for entry in dir_path.iterdir():
@@ -252,7 +287,9 @@ class _FilesystemDataSource(DataSource):
                     if entry.name.startswith(file_prefix):
                         entry_name = unquote(entry.name)
                         if entry_name.endswith(".link"):
-                            entry_name = entry_name[0:-5]  # strip .link off end of string
+                            entry_name = entry_name[
+                                0:-5
+                            ]  # strip .link off end of string
                         if endswith is not None and not entry_name.endswith(endswith):
                             continue
                         count += 1
@@ -273,9 +310,14 @@ class FilesystemStorageBackend(StorageBackendBase):
     config_path = None  # type: str
     metadata_config_path = None  # type: str
 
-    def __init__(self, config: dict = None, path: str = None, metadata_path: str = None,
-                 memory_cache_mb: int = None,
-                 read_only: bool = None):
+    def __init__(
+        self,
+        config: dict = None,
+        path: str = None,
+        metadata_path: str = None,
+        memory_cache_mb: int = None,
+        read_only: bool = None,
+    ):
         """
         Create a storage backend that reads from the filesystem.
         See module documentation for parameters. Parameters that follow
@@ -299,23 +341,30 @@ class FilesystemStorageBackend(StorageBackendBase):
 
         data_source = _FilesystemDataSource(self.config_path)
         metadata_source = DataSourceMetadataSource(
-            _FilesystemDataSource(
-                self.metadata_config_path) if self.metadata_config_path != self.config_path
-            else data_source)
+            _FilesystemDataSource(self.metadata_config_path)
+            if self.metadata_config_path != self.config_path
+            else data_source
+        )
 
-        super().__init__("filesystem", data_source=data_source, metadata_source=metadata_source,
-                         memory_cache_mb=memory_cache_mb, config=config, read_only=read_only)
+        super().__init__(
+            "filesystem",
+            data_source=data_source,
+            metadata_source=metadata_source,
+            memory_cache_mb=memory_cache_mb,
+            config=config,
+            read_only=read_only,
+        )
 
     def to_dict(self):
-        config = {
-            "type": "filesystem"
-        }
+        config = {"type": "filesystem"}
         if self.read_only is not None:
             config["readonly"] = self.read_only
         if self.config_path is not None:
             config["path"] = self.config_path
         if self._memory_cache is not None:
-            config["memory_cache_mb"] = self._memory_cache.memory_cache_bytes / 1024 / 1024
+            config["memory_cache_mb"] = (
+                self._memory_cache.memory_cache_bytes / 1024 / 1024
+            )
         return config
 
 
@@ -389,7 +438,9 @@ class OnDiskPartition(Partition):
         """
         result_type = ResultType.from_object(value)
         self._result_types[key] = result_type
-        self._result_keys[key] = self._codec.store(result_type, self._data_source, None, value)
+        self._result_keys[key] = self._codec.store(
+            result_type, self._data_source, None, value
+        )
 
     def __getitem__(self, item: str) -> object:
         """
@@ -402,8 +453,9 @@ class OnDiskPartition(Partition):
             if self._merge_parent:
                 return self._merge_parent.get(key)
             raise ValueError("Key '{}' not in key list for partition".format(key))
-        return self._codec.load(self._result_types[key], self._data_source,
-                                self._result_keys[key])
+        return self._codec.load(
+            self._result_types[key], self._data_source, self._result_keys[key]
+        )
 
     def list_keys(self, _include_merge_parent: bool = True) -> Iterable[str]:
         if _include_merge_parent and self._merge_parent:

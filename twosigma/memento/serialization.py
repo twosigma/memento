@@ -26,11 +26,17 @@ import re
 
 from twosigma.memento.context import RecursiveContext
 from twosigma.memento.metadata import ResultType, InvocationMetadata, Memento
-from twosigma.memento.reference import FunctionReferenceWithArguments, FunctionReference, \
-    FunctionReferenceWithArgHash
+from twosigma.memento.reference import (
+    FunctionReferenceWithArguments,
+    FunctionReference,
+    FunctionReferenceWithArgHash,
+)
 from twosigma.memento.resource import ResourceHandle
-from twosigma.memento.types import FunctionNotFoundError, MementoFunctionType, \
-    VersionedDataSourceKey
+from twosigma.memento.types import (
+    FunctionNotFoundError,
+    MementoFunctionType,
+    VersionedDataSourceKey,
+)
 
 
 class MementoCodec:
@@ -54,88 +60,134 @@ class MementoCodec:
     def encode_memento(cls, memento: Memento) -> Dict:
         return {
             "time": cls.encode_datetime(memento.time),
-            "invocationMetadata": cls.encode_invocation_metadata(memento.invocation_metadata),
-            "functionDependencies": [cls.encode_fn_reference(x) for x
-                                     in memento.function_dependencies]
-            if memento is not None else [],
+            "invocationMetadata": cls.encode_invocation_metadata(
+                memento.invocation_metadata
+            ),
+            "functionDependencies": (
+                [cls.encode_fn_reference(x) for x in memento.function_dependencies]
+                if memento is not None
+                else []
+            ),
             "runner": memento.runner,
             "correlationId": memento.correlation_id,
-            "contentKey": cls.encode_versioned_data_source_key(memento.content_key)
+            "contentKey": cls.encode_versioned_data_source_key(memento.content_key),
         }
 
     @classmethod
     def decode_memento(cls, state: Dict) -> Memento:
         return Memento(
             time=cls.decode_datetime(state["time"]),
-            invocation_metadata=cls.decode_invocation_metadata(state["invocationMetadata"]),
-            function_dependencies=set(cls.decode_fn_reference(x) for x
-                                      in state["functionDependencies"])
-            if state["functionDependencies"] is not None else {},
+            invocation_metadata=cls.decode_invocation_metadata(
+                state["invocationMetadata"]
+            ),
+            function_dependencies=(
+                set(cls.decode_fn_reference(x) for x in state["functionDependencies"])
+                if state["functionDependencies"] is not None
+                else {}
+            ),
             runner=state["runner"],
             correlation_id=state["correlationId"],
-            content_key=cls.decode_versioned_data_source_key(state["contentKey"])
+            content_key=cls.decode_versioned_data_source_key(state["contentKey"]),
         )
 
     @classmethod
     def encode_invocation_metadata(cls, obj: InvocationMetadata) -> Dict:
         return {
-            "fnReferenceWithArgs": cls.encode_fn_reference_with_args(obj.fn_reference_with_args),
-            "invocations": [cls.encode_fn_reference_with_args(x) for x in obj.invocations]
-            if obj.invocations is not None else None,
-            "resources": [cls.encode_resource_handle(x) for x in obj.resources]
-            if obj.resources is not None else None,
+            "fnReferenceWithArgs": cls.encode_fn_reference_with_args(
+                obj.fn_reference_with_args
+            ),
+            "invocations": (
+                [cls.encode_fn_reference_with_args(x) for x in obj.invocations]
+                if obj.invocations is not None
+                else None
+            ),
+            "resources": (
+                [cls.encode_resource_handle(x) for x in obj.resources]
+                if obj.resources is not None
+                else None
+            ),
             "runtimeSeconds": obj.runtime.total_seconds(),
-            "resultType": obj.result_type.name
+            "resultType": obj.result_type.name,
         }
 
     @classmethod
     def decode_invocation_metadata(cls, state: Dict) -> InvocationMetadata:
         return InvocationMetadata(
-            fn_reference_with_args=cls.decode_fn_reference_with_args(state["fnReferenceWithArgs"]),
-            invocations=[cls.decode_fn_reference_with_args(x) for x in state["invocations"]]
-            if state["invocations"] is not None else None,
-            resources=[cls.decode_resource_handle(x) for x in state["resources"]]
-            if state["resources"] is not None else None,
+            fn_reference_with_args=cls.decode_fn_reference_with_args(
+                state["fnReferenceWithArgs"]
+            ),
+            invocations=(
+                [cls.decode_fn_reference_with_args(x) for x in state["invocations"]]
+                if state["invocations"] is not None
+                else None
+            ),
+            resources=(
+                [cls.decode_resource_handle(x) for x in state["resources"]]
+                if state["resources"] is not None
+                else None
+            ),
             runtime=datetime.timedelta(seconds=state["runtimeSeconds"]),
-            result_type=ResultType[state["resultType"]]
+            result_type=ResultType[state["resultType"]],
         )
 
     @classmethod
     def encode_fn_reference_with_args(cls, obj: FunctionReferenceWithArguments) -> Dict:
         return {
             "fnReference": cls.encode_fn_reference(obj.fn_reference),
-            "args": [cls.encode_arg(x) for x in obj.args]
-            if obj.args is not None else None,
-            "kwargs": {k: cls.encode_arg(v) for (k, v) in obj.kwargs.items()}
-            if obj.kwargs is not None else None,
-            "contextArgs": {k: cls.encode_arg(v) for (k, v) in obj.context_args.items()}
-            if obj.context_args is not None else None
+            "args": (
+                [cls.encode_arg(x) for x in obj.args] if obj.args is not None else None
+            ),
+            "kwargs": (
+                {k: cls.encode_arg(v) for (k, v) in obj.kwargs.items()}
+                if obj.kwargs is not None
+                else None
+            ),
+            "contextArgs": (
+                {k: cls.encode_arg(v) for (k, v) in obj.context_args.items()}
+                if obj.context_args is not None
+                else None
+            ),
         }
 
     @classmethod
-    def decode_fn_reference_with_args(cls, state: Dict) -> FunctionReferenceWithArguments:
+    def decode_fn_reference_with_args(
+        cls, state: Dict
+    ) -> FunctionReferenceWithArguments:
         return FunctionReferenceWithArguments(
             fn_reference=cls.decode_fn_reference(state["fnReference"]),
-            args=tuple([cls.decode_arg(x) for x in state["args"]])
-            if state["args"] is not None else None,
-            kwargs={k: cls.decode_arg(v) for (k, v) in state["kwargs"].items()}
-            if state["kwargs"] is not None else None,
-            context_args={k: cls.decode_arg(v) for (k, v) in state["contextArgs"].items()}
-            if state["contextArgs"] is not None else None
+            args=(
+                tuple([cls.decode_arg(x) for x in state["args"]])
+                if state["args"] is not None
+                else None
+            ),
+            kwargs=(
+                {k: cls.decode_arg(v) for (k, v) in state["kwargs"].items()}
+                if state["kwargs"] is not None
+                else None
+            ),
+            context_args=(
+                {k: cls.decode_arg(v) for (k, v) in state["contextArgs"].items()}
+                if state["contextArgs"] is not None
+                else None
+            ),
         )
 
     @classmethod
-    def encode_fn_reference_with_arg_hash(cls, obj: FunctionReferenceWithArgHash) -> Dict:
+    def encode_fn_reference_with_arg_hash(
+        cls, obj: FunctionReferenceWithArgHash
+    ) -> Dict:
         return {
             "fnReference": cls.encode_fn_reference(obj.fn_reference),
-            "argHash": obj.arg_hash
+            "argHash": obj.arg_hash,
         }
 
     @classmethod
-    def decode_fn_reference_with_arg_hash(cls, state: Dict) -> FunctionReferenceWithArgHash:
+    def decode_fn_reference_with_arg_hash(
+        cls, state: Dict
+    ) -> FunctionReferenceWithArgHash:
         return FunctionReferenceWithArgHash(
             fn_reference=cls.decode_fn_reference(state["fnReference"]),
-            arg_hash=state["argHash"]
+            arg_hash=state["argHash"],
         )
 
     @classmethod
@@ -143,7 +195,7 @@ class MementoCodec:
         return {
             "resourceType": obj.resource_type,
             "url": obj.url,
-            "version": obj.version
+            "version": obj.version,
         }
 
     @classmethod
@@ -151,29 +203,41 @@ class MementoCodec:
         return ResourceHandle(
             resource_type=state["resourceType"],
             url=state["url"],
-            version=state["version"]
+            version=state["version"],
         )
 
     @classmethod
     def encode_fn_reference(cls, obj: FunctionReference) -> Dict:
         return {
             "qualifiedName": obj.qualified_name,
-            "partialArgs": [cls.encode_arg(x) for x in obj.partial_args]
-            if obj.partial_args is not None else None,
-            "partialKwargs": {k: cls.encode_arg(v) for (k, v) in obj.partial_kwargs.items()}
-            if obj.partial_kwargs is not None else None,
-            "parameterNames": obj.parameter_names
+            "partialArgs": (
+                [cls.encode_arg(x) for x in obj.partial_args]
+                if obj.partial_args is not None
+                else None
+            ),
+            "partialKwargs": (
+                {k: cls.encode_arg(v) for (k, v) in obj.partial_kwargs.items()}
+                if obj.partial_kwargs is not None
+                else None
+            ),
+            "parameterNames": obj.parameter_names,
         }
 
     @classmethod
     def decode_fn_reference(cls, state: Dict) -> FunctionReference:
         return FunctionReference.from_qualified_name(
             qualified_name=state["qualifiedName"],
-            partial_args=tuple([cls.decode_arg(x) for x in state["partialArgs"]])
-            if state["partialArgs"] is not None else None,
-            partial_kwargs={k: cls.decode_arg(v) for (k, v) in state["partialKwargs"].items()}
-            if state["partialKwargs"] is not None else None,
-            parameter_names=state["parameterNames"]
+            partial_args=(
+                tuple([cls.decode_arg(x) for x in state["partialArgs"]])
+                if state["partialArgs"] is not None
+                else None
+            ),
+            partial_kwargs=(
+                {k: cls.decode_arg(v) for (k, v) in state["partialKwargs"].items()}
+                if state["partialKwargs"] is not None
+                else None
+            ),
+            parameter_names=state["parameterNames"],
         )
 
     @classmethod
@@ -182,7 +246,7 @@ class MementoCodec:
             "correlationId": obj.correlation_id,
             "retryOnRemoteCall": obj.retry_on_remote_call,
             "preventFurtherCalls": obj.prevent_further_calls,
-            "contextArgs": cls.encode_arg(obj.context_args)
+            "contextArgs": cls.encode_arg(obj.context_args),
         }
 
     @classmethod
@@ -191,23 +255,27 @@ class MementoCodec:
             correlation_id=state["correlationId"],
             retry_on_remote_call=state["retryOnRemoteCall"],
             prevent_further_calls=state["preventFurtherCalls"],
-            context_args=cls.decode_arg(state["contextArgs"])
+            context_args=cls.decode_arg(state["contextArgs"]),
         )
 
     @classmethod
-    def encode_versioned_data_source_key(cls,
-                                         content_key: VersionedDataSourceKey) -> Optional[str]:
+    def encode_versioned_data_source_key(
+        cls, content_key: VersionedDataSourceKey
+    ) -> Optional[str]:
         if content_key is None:
             return None
         return "{}#{}".format(content_key.key, content_key.version)
 
     @classmethod
-    def decode_versioned_data_source_key(cls,
-                                         state: Optional[str]) -> Optional[VersionedDataSourceKey]:
+    def decode_versioned_data_source_key(
+        cls, state: Optional[str]
+    ) -> Optional[VersionedDataSourceKey]:
         if state is None:
             return None
         hash_index = state.rfind("#")
-        return VersionedDataSourceKey(key=state[0:hash_index], version=state[hash_index + 1:])
+        return VersionedDataSourceKey(
+            key=state[0:hash_index], version=state[hash_index + 1 :]
+        )
 
     @classmethod
     def encode_arg(cls, obj: Any) -> Dict:
@@ -217,33 +285,21 @@ class MementoCodec:
 
         """
         if obj is None:
-            return {
-                "type": ResultType.null.name
-            }
+            return {"type": ResultType.null.name}
         elif isinstance(obj, bool):
-            return {
-                "type": ResultType.boolean.name,
-                "value": obj
-            }
+            return {"type": ResultType.boolean.name, "value": obj}
         elif isinstance(obj, str):
-            return {
-                "type": ResultType.string.name,
-                "value": obj
-            }
+            return {"type": ResultType.string.name, "value": obj}
         elif isinstance(obj, bytes):
-            return {
-                "type": ResultType.binary.name,
-                "value": base64.b64encode(obj)
-            }
+            return {"type": ResultType.binary.name, "value": base64.b64encode(obj)}
         elif isinstance(obj, int) or isinstance(obj, float):
-            return {
-                "type": ResultType.number.name,
-                "value": obj
-            }
+            return {"type": ResultType.number.name, "value": obj}
         elif isinstance(obj, np.ndarray):
             if obj.ndim > 1:
-                raise ValueError("Memento does not support serializing array arguments of "
-                                 "more than 1 dimension")
+                raise ValueError(
+                    "Memento does not support serializing array arguments of "
+                    "more than 1 dimension"
+                )
 
             if obj.dtype == np.bool:
                 type_str = ResultType.array_boolean.name
@@ -262,37 +318,33 @@ class MementoCodec:
             else:
                 raise ValueError("Unknown numpy array type: {}".format(obj.dtype))
 
-            return {
-                "type": type_str,
-                "value": [x for x in obj]
-            }
+            return {"type": type_str, "value": [x for x in obj]}
         elif isinstance(obj, Callable):
             if not isinstance(obj, MementoFunctionType):
-                raise ValueError("{} is callable but not a MementoFunctionType".format(obj))
+                raise ValueError(
+                    "{} is callable but not a MementoFunctionType".format(obj)
+                )
             return {
                 "type": "twosigma.memento.FunctionReference",
-                "value": cls.encode_fn_reference(obj.fn_reference())
+                "value": cls.encode_fn_reference(obj.fn_reference()),
             }
         elif isinstance(obj, list) or isinstance(obj, tuple):
             return {
                 "type": ResultType.list_result.name,
-                "value": [cls.encode_arg(x) for x in obj]
+                "value": [cls.encode_arg(x) for x in obj],
             }
         elif isinstance(obj, dict):
             return {
                 "type": ResultType.dictionary.name,
-                "value": {k: cls.encode_arg(v) for (k, v) in obj.items()}
+                "value": {k: cls.encode_arg(v) for (k, v) in obj.items()},
             }
         elif isinstance(obj, datetime.datetime):
             return {
                 "type": ResultType.timestamp.name,
-                "value": cls.encode_datetime(obj)
+                "value": cls.encode_datetime(obj),
             }
         elif isinstance(obj, datetime.date):
-            return {
-                "type": ResultType.date.name,
-                "value": cls.encode_datetime(obj)
-            }
+            return {"type": ResultType.date.name, "value": cls.encode_datetime(obj)}
         else:
             raise ValueError("Cannot encode argument of type {}".format(type(obj)))
 
@@ -305,21 +357,26 @@ class MementoCodec:
 
         """
         if type(state) is not dict:
-            raise ValueError("During deserialization of argument, state was not a dict.")
+            raise ValueError(
+                "During deserialization of argument, state was not a dict."
+            )
 
         obj_type = state["type"]
         if not obj_type:
             raise ValueError(
-                "During deserialization of argument, state did not have 'type' attribute.")
+                "During deserialization of argument, state did not have 'type' attribute."
+            )
 
         if obj_type == ResultType.null.name:
             return None
 
         value = state["value"]
 
-        if obj_type == ResultType.boolean.name or \
-                obj_type == ResultType.string.name or \
-                obj_type == ResultType.number.name:
+        if (
+            obj_type == ResultType.boolean.name
+            or obj_type == ResultType.string.name
+            or obj_type == ResultType.number.name
+        ):
             return value
         elif obj_type == ResultType.binary.name:
             return base64.b64decode(value)
@@ -343,7 +400,8 @@ class MementoCodec:
                 raise FunctionNotFoundError(
                     "Could not deserialize: Could not replace fn_reference with fn for {}. "
                     "This could be because the function is not in the path or because of a "
-                    "version mismatch.".format(fn_reference.qualified_name))
+                    "version mismatch.".format(fn_reference.qualified_name)
+                )
             return fn_reference.memento_fn
         elif obj_type == ResultType.list_result.name:
             return [cls.decode_arg(x) for x in value]

@@ -23,10 +23,19 @@ from typing import List  # noqa: F401
 from unittest import TestCase  # noqa: F401
 
 import twosigma.memento as m  # noqa: F401
-from twosigma.memento.runner_test import runner_fn_test_1, runner_fn_test_apply_and_double, \
-    runner_fn_test_add, runner_fn_test_sum_double_batch, fn_calls_undeclared_dependency, \
-    fn_with_explicit_version_calls_undeclared_dependency, fn_returns_key_override_result, \
-    runner_fn_calls_runner_fn_f, fn_recursive_a, fn_recursive_b, fn_recursive_c
+from twosigma.memento.runner_test import (
+    runner_fn_test_1,
+    runner_fn_test_apply_and_double,
+    runner_fn_test_add,
+    runner_fn_test_sum_double_batch,
+    fn_calls_undeclared_dependency,
+    fn_with_explicit_version_calls_undeclared_dependency,
+    fn_returns_key_override_result,
+    runner_fn_calls_runner_fn_f,
+    fn_recursive_a,
+    fn_recursive_b,
+    fn_recursive_c,
+)
 
 
 class RunnerBackendTester(ABC):
@@ -37,7 +46,7 @@ class RunnerBackendTester(ABC):
 
     """
 
-    backend = None      # type: m.RunnerBackend
+    backend = None  # type: m.RunnerBackend
 
     def setup_method(self):
         pass
@@ -48,8 +57,16 @@ class RunnerBackendTester(ABC):
     @staticmethod
     def test_memoize():
         # This also tests serializing function references
-        assert {"a": 1, "b": 2, "c": [{"three": 3}], "d": None, "e": True, "f": True} == \
-               runner_fn_test_1(1, c=[{"three": 3}], b=2, e=runner_fn_test_1, f=[{"a": runner_fn_test_1}])
+        assert {
+            "a": 1,
+            "b": 2,
+            "c": [{"three": 3}],
+            "d": None,
+            "e": True,
+            "f": True,
+        } == runner_fn_test_1(
+            1, c=[{"three": 3}], b=2, e=runner_fn_test_1, f=[{"a": runner_fn_test_1}]
+        )
 
     @staticmethod
     def test_call_stack_invocations_tracked():
@@ -61,9 +78,14 @@ class RunnerBackendTester(ABC):
         runner_fn_test_apply_and_double(add_2_and_double, 2)
 
         memento = runner_fn_test_apply_and_double.memento(add_2_and_double, 2)
-        invocations = memento.invocation_metadata.invocations  # type: List[FunctionReferenceWithArguments]
+        invocations = (
+            memento.invocation_metadata.invocations
+        )  # type: List[FunctionReferenceWithArguments]
         assert 1 == len(invocations)
-        assert "runner_fn_test_apply_and_double" == invocations[0].fn_reference.function_name
+        assert (
+            "runner_fn_test_apply_and_double"
+            == invocations[0].fn_reference.function_name
+        )
 
         # Try with a batch run - make sure all invocations from the batch are recorded in invocations
         # runner_fn_test_sum_double_batch --> runner_fn_test_apply_and_double --> runner_fn_test_add
@@ -71,8 +93,14 @@ class RunnerBackendTester(ABC):
         memento = runner_fn_test_sum_double_batch.memento(add_2_and_double, 10, 12)
         invocations = memento.invocation_metadata.invocations
         assert 2 == len(invocations)
-        assert "runner_fn_test_apply_and_double" == invocations[0].fn_reference.function_name
-        assert "runner_fn_test_apply_and_double" == invocations[1].fn_reference.function_name
+        assert (
+            "runner_fn_test_apply_and_double"
+            == invocations[0].fn_reference.function_name
+        )
+        assert (
+            "runner_fn_test_apply_and_double"
+            == invocations[1].fn_reference.function_name
+        )
 
     @staticmethod
     def test_correlation_id():
@@ -144,11 +172,17 @@ class RunnerBackendTester(ABC):
         assert mem_a is not None
         assert 2 == len(mem_a.invocation_metadata.invocations)
         for i in mem_a.invocation_metadata.invocations:
-            assert fn_recursive_b.fn_reference().qualified_name == i.fn_reference.qualified_name
+            assert (
+                fn_recursive_b.fn_reference().qualified_name
+                == i.fn_reference.qualified_name
+            )
             mem_b = i.fn_reference.memento_fn.memento(x=i.kwargs["x"])  # type: Memento
             i_b = mem_b.invocation_metadata
             assert 1 == len(i_b.invocations)
-            assert fn_recursive_c.fn_reference().qualified_name == i_b.invocations[0].fn_reference.qualified_name
+            assert (
+                fn_recursive_c.fn_reference().qualified_name
+                == i_b.invocations[0].fn_reference.qualified_name
+            )
 
     @staticmethod
     def test_memento_graph():

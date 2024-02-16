@@ -23,7 +23,12 @@ import tempfile
 from twosigma.memento import Environment, ConfigurationRepository, FunctionCluster
 from twosigma.memento.reference import FunctionReferenceWithArguments
 from twosigma.memento.storage_filesystem import FilesystemStorageBackend
-from tests.test_storage_backend import StorageBackendTester, DataSourceTester, MetadataSourceTester, fn1
+from tests.test_storage_backend import (
+    StorageBackendTester,
+    DataSourceTester,
+    MetadataSourceTester,
+    fn1,
+)
 
 
 class TestStorageFilesystem(StorageBackendTester):
@@ -34,18 +39,27 @@ class TestStorageFilesystem(StorageBackendTester):
         self.original_env = m.Environment.get()
         self.base_path = tempfile.mkdtemp(prefix="memento_storage_filesystem_test")
         self.data_path = "{}/data".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(name="cluster1",
-                                                storage=FilesystemStorageBackend(
-                                                    path="{}/data".format(self.base_path),
-                                                    # test with a different metadata path from data path
-                                                    metadata_path="{}/metadata".format(self.base_path)))
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1",
+                                storage=FilesystemStorageBackend(
+                                    path="{}/data".format(self.base_path),
+                                    # test with a different metadata path from data path
+                                    metadata_path="{}/metadata".format(self.base_path),
+                                ),
+                            )
+                        },
+                    )
+                ],
             )
-        ]))
+        )
         self.cluster = m.Environment.get().get_cluster("cluster1")
         self.backend = self.cluster.storage
 
@@ -68,21 +82,32 @@ class TestStorageFilesystemWithMemoryCache(StorageBackendTester):
     def setup_method(self):
         super().setup_method()
         self.original_env = m.Environment.get()
-        self.base_path = tempfile.mkdtemp(prefix="memento_storage_filesystem_with_memory_cache_test")
+        self.base_path = tempfile.mkdtemp(
+            prefix="memento_storage_filesystem_with_memory_cache_test"
+        )
         self.data_path = "{}/data".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(name="cluster1",
-                                                storage=FilesystemStorageBackend(
-                                                    path="{}/data".format(self.base_path),
-                                                    # test with a different metadata path from data path
-                                                    metadata_path="{}/metadata".format(self.base_path),
-                                                    memory_cache_mb=16))
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1",
+                                storage=FilesystemStorageBackend(
+                                    path="{}/data".format(self.base_path),
+                                    # test with a different metadata path from data path
+                                    metadata_path="{}/metadata".format(self.base_path),
+                                    memory_cache_mb=16,
+                                ),
+                            )
+                        },
+                    )
+                ],
             )
-        ]))
+        )
         self.cluster = m.Environment.get().get_cluster("cluster1")
         self.backend = self.cluster.storage
 
@@ -95,7 +120,9 @@ class TestStorageFilesystemWithMemoryCache(StorageBackendTester):
     def test_cache_eviction(self):
         cache = cast(FilesystemStorageBackend, self.backend)._memory_cache
         for i in range(0, 32):
-            fn_ref = fn1.fn_reference().with_args(i)  # type: FunctionReferenceWithArguments
+            fn_ref = fn1.fn_reference().with_args(
+                i
+            )  # type: FunctionReferenceWithArguments
             mm = self.get_dummy_memento(fn_ref)
             self.backend.memoize(None, mm, "." * 1024000)
             assert self.backend.is_memoized(fn_ref.fn_reference, fn_ref.arg_hash)
@@ -116,16 +143,25 @@ class TestFilesystemDataSourceTest(DataSourceTester):
         self.original_env = m.Environment.get()
         self.base_path = tempfile.mkdtemp(prefix="memento_storage_filesystem_test")
         self.data_path = "{}/data".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(name="cluster1",
-                                                storage=FilesystemStorageBackend(
-                                                    path="{}/data".format(self.base_path)))
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1",
+                                storage=FilesystemStorageBackend(
+                                    path="{}/data".format(self.base_path)
+                                ),
+                            )
+                        },
+                    )
+                ],
             )
-        ]))
+        )
         self.cluster = m.Environment.get().get_cluster("cluster1")
         # noinspection PyUnresolvedReferences
         self.data_source = self.cluster.storage._data_source
@@ -146,16 +182,25 @@ class TestFilesystemMetadataSource(MetadataSourceTester):
         self.original_env = m.Environment.get()
         self.base_path = tempfile.mkdtemp(prefix="memento_storage_filesystem_test")
         self.data_path = "{}/metadata".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(name="cluster1",
-                                                storage=FilesystemStorageBackend(
-                                                    path="{}/data".format(self.base_path)))
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1",
+                                storage=FilesystemStorageBackend(
+                                    path="{}/data".format(self.base_path)
+                                ),
+                            )
+                        },
+                    )
+                ],
             )
-        ]))
+        )
         self.cluster = m.Environment.get().get_cluster("cluster1")
         # noinspection PyUnresolvedReferences
         self.metadata_source = self.cluster.storage._metadata_source

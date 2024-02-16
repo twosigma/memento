@@ -23,6 +23,7 @@ from unittest import TestCase  # noqa: F401
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
+
 # noinspection PyUnresolvedReferences
 from pandas import Timestamp
 import numpy as np
@@ -33,8 +34,13 @@ from twosigma.memento.memento import FunctionReference
 from twosigma.memento.metadata import ResultType, InvocationMetadata, Memento
 from twosigma.memento.partition import InMemoryPartition
 from twosigma.memento.reference import FunctionReferenceWithArguments
-from twosigma.memento.storage_base import DataSource, MetadataSource, DataSourceKey, MemoryCache, \
-    ResultIsWithData
+from twosigma.memento.storage_base import (
+    DataSource,
+    MetadataSource,
+    DataSourceKey,
+    MemoryCache,
+    ResultIsWithData,
+)
 
 now_date = Timestamp.today(None).date()
 now_time = Timestamp.today(None)
@@ -99,10 +105,12 @@ def fn_return_time():
 
 @m.memento_function(cluster="cluster1")
 def fn_return_dictionary():
-    return {"a": 2,
-            "b": {"c": "d"},
-            "e": {"f": [1.0, 2.1, 3.2]},
-            "g": pd.Series([1, 2, 3])}
+    return {
+        "a": 2,
+        "b": {"c": "d"},
+        "e": {"f": [1.0, 2.1, 3.2]},
+        "g": pd.Series([1, 2, 3]),
+    }
 
 
 @m.memento_function(cluster="cluster1")
@@ -122,38 +130,39 @@ def fn_return_numpy_array_bool():
 
 @m.memento_function(cluster="cluster1")
 def fn_return_numpy_array_int8():
-    return np.array([1, 2, 3], dtype='int8')
+    return np.array([1, 2, 3], dtype="int8")
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_numpy_array_int16():
-    return np.array([1, 2, 3], dtype='int16')
+    return np.array([1, 2, 3], dtype="int16")
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_numpy_array_int32():
-    return np.array([1, 2, 3], dtype='int32')
+    return np.array([1, 2, 3], dtype="int32")
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_numpy_array_int64():
-    return np.array([1, 2, 3], dtype='int64')
+    return np.array([1, 2, 3], dtype="int64")
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_numpy_array_float32():
-    return np.array([1.0, 2.0, 3.0], dtype='float32')
+    return np.array([1.0, 2.0, 3.0], dtype="float32")
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_numpy_array_float64():
-    return np.array([1.0, 2.0, 3.0], dtype='float64')
+    return np.array([1.0, 2.0, 3.0], dtype="float64")
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_index():
-    return pd.DatetimeIndex([Timestamp.now() - datetime.timedelta(days=1),
-                             Timestamp.now()])
+    return pd.DatetimeIndex(
+        [Timestamp.now() - datetime.timedelta(days=1), Timestamp.now()]
+    )
 
 
 @m.memento_function(cluster="cluster1")
@@ -169,9 +178,13 @@ def fn_return_series_with_index():
 
 @m.memento_function(cluster="cluster1")
 def fn_return_series_with_multiindex():
-    idx = pd.DatetimeIndex([Timestamp.now() - datetime.timedelta(days=2),
-                            Timestamp.now() - datetime.timedelta(days=1),
-                            Timestamp.now()])
+    idx = pd.DatetimeIndex(
+        [
+            Timestamp.now() - datetime.timedelta(days=2),
+            Timestamp.now() - datetime.timedelta(days=1),
+            Timestamp.now(),
+        ]
+    )
     idx2 = pd.Index([11, 22, 33])
     idx3 = pd.date_range("2020-01-01", periods=3, freq="D")
     return pd.Series([1, 2, 3], index=[idx, idx2, idx3], name="foo")
@@ -179,28 +192,42 @@ def fn_return_series_with_multiindex():
 
 @m.memento_function(cluster="cluster1")
 def fn_return_dataframe():
-    return pd.DataFrame([
-        {"name": "a", "val": "1"},
-        {"name": "b", "val": "2"},
-        {"name": "c", "val": "3"}
-    ])
+    return pd.DataFrame(
+        [
+            {"name": "a", "val": "1"},
+            {"name": "b", "val": "2"},
+            {"name": "c", "val": "3"},
+        ]
+    )
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_dataframe_with_index():
-    return pd.DataFrame([
-        {"name": "a", "val": "1"},
-        {"name": "b", "val": "2"},
-        {"name": "c", "val": "3"}
-    ], index=pd.Index(['x', 'y', 'z']))
+    return pd.DataFrame(
+        [
+            {"name": "a", "val": "1"},
+            {"name": "b", "val": "2"},
+            {"name": "c", "val": "3"},
+        ],
+        index=pd.Index(["x", "y", "z"]),
+    )
 
 
 @m.memento_function(cluster="cluster1")
 def fn_return_partition():
-    return InMemoryPartition({"a": None, "b": True, "c": 1, "d": 2.0, "e": [1, 2, 3],
-                              "f": {"a": "b"}, "g": np.array([1, 2, 3], dtype='int8'),
-                              "h": pd.DataFrame([{"name": "a", "val": "1"}]),
-                              "i": InMemoryPartition({"j": "k"})})
+    return InMemoryPartition(
+        {
+            "a": None,
+            "b": True,
+            "c": 1,
+            "d": 2.0,
+            "e": [1, 2, 3],
+            "f": {"a": "b"},
+            "g": np.array([1, 2, 3], dtype="int8"),
+            "h": pd.DataFrame([{"name": "a", "val": "1"}]),
+            "i": InMemoryPartition({"j": "k"}),
+        }
+    )
 
 
 @m.memento_function(cluster="cluster1")
@@ -248,8 +275,8 @@ class StorageBackendTester(ABC):
 
     """
 
-    backend = None      # type: StorageBackend
-    test = None         # type: TestCase
+    backend = None  # type: StorageBackend
+    test = None  # type: TestCase
 
     def setup_method(self):
         pass
@@ -258,7 +285,9 @@ class StorageBackendTester(ABC):
         pass
 
     @staticmethod
-    def get_dummy_memento(fn_reference_with_args: FunctionReferenceWithArguments) -> Memento:
+    def get_dummy_memento(
+        fn_reference_with_args: FunctionReferenceWithArguments,
+    ) -> Memento:
         now = datetime.datetime.now(datetime.timezone.utc)
         return Memento(
             time=now,
@@ -267,47 +296,67 @@ class StorageBackendTester(ABC):
                 fn_reference_with_args=fn_reference_with_args,
                 result_type=ResultType.string,
                 invocations=[],
-                resources=[]
+                resources=[],
             ),
             function_dependencies={fn_reference_with_args.fn_reference},
             runner={},
             correlation_id="abc123",
-            content_key=VersionedDataSourceKey("def456", "0")
+            content_key=VersionedDataSourceKey("def456", "0"),
         )
 
     def test_list_functions(self):
         assert 0 == len(self.backend.list_functions())
         fn1(1)
         retry_until(lambda: self.backend.list_functions(), lambda x: len(x) == 1)
-        assert {FunctionReference(fn1).qualified_name} == \
-            set([x.qualified_name for x in self.backend.list_functions()])
+        assert {FunctionReference(fn1).qualified_name} == set(
+            [x.qualified_name for x in self.backend.list_functions()]
+        )
         fn1(1)
         fn1(2)
         fn_return_none_1()
         retry_until(lambda: self.backend.list_functions(), lambda x: len(x) == 2)
-        assert {FunctionReference(fn1).qualified_name,
-                FunctionReference(fn_return_none_1).qualified_name} == \
-            set([x.qualified_name for x in self.backend.list_functions()])
+        assert {
+            FunctionReference(fn1).qualified_name,
+            FunctionReference(fn_return_none_1).qualified_name,
+        } == set([x.qualified_name for x in self.backend.list_functions()])
 
     def test_list_mementos(self):
         assert 0 == len(self.backend.list_mementos(FunctionReference(fn1)))
         assert 0 == len(self.backend.list_mementos(FunctionReference(fn2)))
         fn1(1)
-        retry_until(lambda: self.backend.list_mementos(FunctionReference(fn1)),
-                    lambda x: len(x) == 1)
-        assert {1} == set([x.invocation_metadata.fn_reference_with_args.args[0]
-                           for x in self.backend.list_mementos(FunctionReference(fn1))])
+        retry_until(
+            lambda: self.backend.list_mementos(FunctionReference(fn1)),
+            lambda x: len(x) == 1,
+        )
+        assert {1} == set(
+            [
+                x.invocation_metadata.fn_reference_with_args.args[0]
+                for x in self.backend.list_mementos(FunctionReference(fn1))
+            ]
+        )
         fn1(1)
         fn1(2)
-        retry_until(lambda: self.backend.list_mementos(FunctionReference(fn1)),
-                    lambda x: len(x) == 2)
-        assert {1, 2} == set([x.invocation_metadata.fn_reference_with_args.args[0]
-                              for x in self.backend.list_mementos(FunctionReference(fn1))])
+        retry_until(
+            lambda: self.backend.list_mementos(FunctionReference(fn1)),
+            lambda x: len(x) == 2,
+        )
+        assert {1, 2} == set(
+            [
+                x.invocation_metadata.fn_reference_with_args.args[0]
+                for x in self.backend.list_mementos(FunctionReference(fn1))
+            ]
+        )
         fn2(3)
-        retry_until(lambda: self.backend.list_mementos(FunctionReference(fn2)),
-                    lambda x: len(x) == 1)
-        assert {3} == set([x.invocation_metadata.fn_reference_with_args.args[0]
-                           for x in self.backend.list_mementos(FunctionReference(fn2))])
+        retry_until(
+            lambda: self.backend.list_mementos(FunctionReference(fn2)),
+            lambda x: len(x) == 1,
+        )
+        assert {3} == set(
+            [
+                x.invocation_metadata.fn_reference_with_args.args[0]
+                for x in self.backend.list_mementos(FunctionReference(fn2))
+            ]
+        )
 
     def test_memoize(self):
         fn1_reference = fn_return_none_1.fn_reference().with_args()
@@ -321,12 +370,15 @@ class StorageBackendTester(ABC):
                 fn_reference_with_args=fn1_reference,
                 result_type=ResultType.string,
                 invocations=[fn2_reference],
-                resources=[]
+                resources=[],
             ),
-            function_dependencies={fn1_reference.fn_reference, fn2_reference.fn_reference},
+            function_dependencies={
+                fn1_reference.fn_reference,
+                fn2_reference.fn_reference,
+            },
             runner={},
             correlation_id="abc123",
-            content_key=VersionedDataSourceKey("def456", "0")
+            content_key=VersionedDataSourceKey("def456", "0"),
         )
         result = None
         self.backend.memoize(None, memento, result)
@@ -334,29 +386,55 @@ class StorageBackendTester(ABC):
         # Validate the content hash was changed during the call to memoize
         assert VersionedDataSourceKey("def456", "0") != memento.content_key
 
-        actual_memento = self.backend.get_memento(fn1_reference.fn_reference_with_arg_hash())
+        actual_memento = self.backend.get_memento(
+            fn1_reference.fn_reference_with_arg_hash()
+        )
         actual_result = self.backend.read_result(actual_memento)
 
         assert memento.time == actual_memento.time, "now={}".format(now)
-        assert memento.invocation_metadata.runtime == actual_memento.invocation_metadata.runtime
-        assert memento.invocation_metadata.fn_reference_with_args.fn_reference.qualified_name == \
-            actual_memento.invocation_metadata.fn_reference_with_args.fn_reference.qualified_name
-        assert memento.invocation_metadata.fn_reference_with_args.args == \
-            actual_memento.invocation_metadata.fn_reference_with_args.args
-        assert memento.invocation_metadata.fn_reference_with_args.kwargs == \
-            actual_memento.invocation_metadata.fn_reference_with_args.kwargs
-        assert memento.invocation_metadata.fn_reference_with_args.arg_hash == \
-            actual_memento.invocation_metadata.fn_reference_with_args.arg_hash
-        assert memento.invocation_metadata.result_type == actual_memento.invocation_metadata.result_type
-        assert memento.invocation_metadata.invocations[0].fn_reference.qualified_name == \
-            actual_memento.invocation_metadata.invocations[0].fn_reference.qualified_name
-        assert memento.invocation_metadata.invocations[0].arg_hash == \
-            actual_memento.invocation_metadata.invocations[0].arg_hash
+        assert (
+            memento.invocation_metadata.runtime
+            == actual_memento.invocation_metadata.runtime
+        )
+        assert (
+            memento.invocation_metadata.fn_reference_with_args.fn_reference.qualified_name
+            == actual_memento.invocation_metadata.fn_reference_with_args.fn_reference.qualified_name
+        )
+        assert (
+            memento.invocation_metadata.fn_reference_with_args.args
+            == actual_memento.invocation_metadata.fn_reference_with_args.args
+        )
+        assert (
+            memento.invocation_metadata.fn_reference_with_args.kwargs
+            == actual_memento.invocation_metadata.fn_reference_with_args.kwargs
+        )
+        assert (
+            memento.invocation_metadata.fn_reference_with_args.arg_hash
+            == actual_memento.invocation_metadata.fn_reference_with_args.arg_hash
+        )
+        assert (
+            memento.invocation_metadata.result_type
+            == actual_memento.invocation_metadata.result_type
+        )
+        assert (
+            memento.invocation_metadata.invocations[0].fn_reference.qualified_name
+            == actual_memento.invocation_metadata.invocations[
+                0
+            ].fn_reference.qualified_name
+        )
+        assert (
+            memento.invocation_metadata.invocations[0].arg_hash
+            == actual_memento.invocation_metadata.invocations[0].arg_hash
+        )
         assert result == actual_result
 
-        assert self.backend.is_memoized(fn1_reference.fn_reference, fn1_reference.arg_hash)
+        assert self.backend.is_memoized(
+            fn1_reference.fn_reference, fn1_reference.arg_hash
+        )
         self.backend.forget_call(fn1_reference.fn_reference_with_arg_hash())
-        assert not self.backend.is_memoized(fn1_reference.fn_reference, fn1_reference.arg_hash)
+        assert not self.backend.is_memoized(
+            fn1_reference.fn_reference, fn1_reference.arg_hash
+        )
 
     @staticmethod
     def test_memoize_exception():
@@ -566,15 +644,20 @@ class StorageBackendTester(ABC):
         assert 2.0 == second.get("d")
         assert [1, 2, 3] == second.get("e")
         assert {"a": "b"} == second.get("f")
-        assert np.array_equal(np.array([1, 2, 3], dtype='int8'), cast(np.array, second.get("g")))
+        assert np.array_equal(
+            np.array([1, 2, 3], dtype="int8"), cast(np.array, second.get("g"))
+        )
         # noinspection PyUnresolvedReferences
         assert first.get("h").equals(second.get("h"))
         # noinspection PyUnresolvedReferences
         assert "k" == second.get("i").get("j")
 
     def test_memoize_partition_with_parent(self):
-        memory_cache = self.backend._memory_cache if hasattr(
-            self.backend, "_memory_cache") else None  # type: Optional[MemoryCache]
+        memory_cache = (
+            self.backend._memory_cache
+            if hasattr(self.backend, "_memory_cache")
+            else None
+        )  # type: Optional[MemoryCache]
 
         # Ensure a is memoized to disk
         assert fn_return_partition_with_parent_a.memento() is None
@@ -631,7 +714,7 @@ class StorageBackendTester(ABC):
         url = self.backend.make_url_for_result(memento)
         assert url is not None
         # The URL should probably have the content key in it somewhere (though this is not technically a requirement)
-        ck = memento.content_key.key[memento.content_key.key.rfind("/")+1:]
+        ck = memento.content_key.key[memento.content_key.key.rfind("/") + 1 :]
         assert url.find(ck) != -1, url
 
     def test_forget_call(self):
@@ -691,7 +774,9 @@ class StorageBackendTester(ABC):
         with pytest.raises(ValueError):
             self.backend.write_metadata(
                 memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-                "key1", "value1".encode("utf-8"))
+                "key1",
+                "value1".encode("utf-8"),
+            )
 
         # Make the cluster writable and then ensure memoization occurs
         cluster1.storage.read_only = False
@@ -718,17 +803,26 @@ class StorageBackendTester(ABC):
         storage = m.Environment.get().get_cluster("cluster1").storage
         storage.write_metadata(
             memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            "key1", "value1".encode("utf-8"))
+            "key1",
+            "value1".encode("utf-8"),
+        )
         # noinspection PyUnresolvedReferences
         assert "value1" == storage.read_metadata(
             memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            "key1", retry_on_none=True).decode("utf-8")
+            "key1",
+            retry_on_none=True,
+        ).decode("utf-8")
 
         # test that deleting the memento deletes the metadata
         fn_add_one.forget(1)
-        assert storage.read_metadata(
-            memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            "key1", retry_on_none=True) is None
+        assert (
+            storage.read_metadata(
+                memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+                "key1",
+                retry_on_none=True,
+            )
+            is None
+        )
 
     @staticmethod
     def test_metadata_rw_store_with_data():
@@ -738,17 +832,26 @@ class StorageBackendTester(ABC):
         storage = m.Environment.get().get_cluster("cluster1").storage
         storage.write_metadata(
             memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            "key1", "value1".encode("utf-8"))
+            "key1",
+            "value1".encode("utf-8"),
+        )
         # noinspection PyUnresolvedReferences
         assert "value1" == storage.read_metadata(
             memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            "key1", retry_on_none=True).decode("utf-8")
+            "key1",
+            retry_on_none=True,
+        ).decode("utf-8")
 
         # test that deleting the memento deletes the metadata
         fn_add_one.forget(1)
-        assert storage.read_metadata(
-            memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            "key1", retry_on_none=True) is None
+        assert (
+            storage.read_metadata(
+                memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+                "key1",
+                retry_on_none=True,
+            )
+            is None
+        )
 
     @staticmethod
     def test_content_addressable_storage():
@@ -757,7 +860,9 @@ class StorageBackendTester(ABC):
         assert r1 == r2
         m1 = fn1.memento(100)
         m2 = fn2.memento(100)
-        assert (m1.content_key is None and m2.content_key is None) or (m1.content_key.key == m2.content_key.key)
+        assert (m1.content_key is None and m2.content_key is None) or (
+            m1.content_key.key == m2.content_key.key
+        )
 
 
 class DataSourceTester(ABC):
@@ -769,11 +874,11 @@ class DataSourceTester(ABC):
     """
 
     data_source = None  # type: DataSource
-    test = None         # type: TestCase
-    data = None         # type: BytesIO
-    data2 = None        # type: BytesIO
-    data3 = None        # type: BytesIO
-    data4 = None        # type: BytesIO
+    test = None  # type: TestCase
+    data = None  # type: BytesIO
+    data2 = None  # type: BytesIO
+    data3 = None  # type: BytesIO
+    data4 = None  # type: BytesIO
 
     def setup_method(self):
         self.data = BytesIO("abc".encode("utf-8"))
@@ -984,7 +1089,9 @@ class DataSourceTester(ABC):
         # Some storage implementations need to set up an initial key with which to associate
         # the data source. This will be added to the expected results in the following tests.
         baseline_set = set(self.data_source.list_keys_nonversioned(root))
-        baseline_set_recursive = set(self.data_source.list_keys_nonversioned(root, recursive=True))
+        baseline_set_recursive = set(
+            self.data_source.list_keys_nonversioned(root, recursive=True)
+        )
 
         self.data_source.output(a_b, data)
         self.data_source.output(a_c, data2)
@@ -992,68 +1099,165 @@ class DataSourceTester(ABC):
         self.data_source.output(f, data4)
 
         # Test recursive=False and limit
-        assert baseline_set.union({a, f}) == \
-               set(self.data_source.list_keys_nonversioned(directory=root, file_prefix="", recursive=False))
-        assert 2 == len(list(self.data_source.list_keys_nonversioned(directory=root, file_prefix="",
-                                                                     recursive=False, limit=2)))
+        assert baseline_set.union({a, f}) == set(
+            self.data_source.list_keys_nonversioned(
+                directory=root, file_prefix="", recursive=False
+            )
+        )
+        assert 2 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=root, file_prefix="", recursive=False, limit=2
+                )
+            )
+        )
 
-        assert {a_b, a_c, a_d} == \
-            set(self.data_source.list_keys_nonversioned(directory=a, file_prefix="", recursive=False))
-        assert 2 == len(list(self.data_source.list_keys_nonversioned(
-            directory=a, file_prefix="", recursive=False, limit=2)))
+        assert {a_b, a_c, a_d} == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a, file_prefix="", recursive=False
+            )
+        )
+        assert 2 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a, file_prefix="", recursive=False, limit=2
+                )
+            )
+        )
 
-        assert {a_d_ef} == \
-            set(self.data_source.list_keys_nonversioned(directory=a_d, file_prefix="e", recursive=False))
+        assert {a_d_ef} == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a_d, file_prefix="e", recursive=False
+            )
+        )
 
-        assert 1 == len(list(self.data_source.list_keys_nonversioned(directory=a_d, file_prefix="e",
-                                                                     recursive=False, limit=2)))
+        assert 1 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a_d, file_prefix="e", recursive=False, limit=2
+                )
+            )
+        )
 
-        assert set() == \
-            set(self.data_source.list_keys_nonversioned(directory=a, file_prefix="g",
-                                                        recursive=False))
-        assert 0 == len(list(self.data_source.list_keys_nonversioned(directory=a, file_prefix="g",
-                                                                     recursive=False, limit=2)))
+        assert set() == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a, file_prefix="g", recursive=False
+            )
+        )
+        assert 0 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a, file_prefix="g", recursive=False, limit=2
+                )
+            )
+        )
 
-        assert {a_d_ef} == set(self.data_source.list_keys_nonversioned(
-            directory=a_d, file_prefix="e", recursive=False))
+        assert {a_d_ef} == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a_d, file_prefix="e", recursive=False
+            )
+        )
 
-        assert 1 == len(list(self.data_source.list_keys_nonversioned(
-            directory=a_d, file_prefix="e", recursive=False, limit=2)))
+        assert 1 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a_d, file_prefix="e", recursive=False, limit=2
+                )
+            )
+        )
 
         # Test recursive=True and limit
-        assert baseline_set_recursive.union({a_b, a_c, a_d_ef, f}) == \
-            set(self.data_source.list_keys_nonversioned(directory=root, file_prefix="", recursive=True))
+        assert baseline_set_recursive.union({a_b, a_c, a_d_ef, f}) == set(
+            self.data_source.list_keys_nonversioned(
+                directory=root, file_prefix="", recursive=True
+            )
+        )
 
-        assert min(2, len(baseline_set) + 2) == \
-            len(list(self.data_source.list_keys_nonversioned(directory=root, file_prefix="",
-                                                             recursive=True, limit=2)))
-        assert {a_b, a_c, a_d_ef} == set(self.data_source.list_keys_nonversioned(
-            directory=a, file_prefix="", recursive=True))
+        assert min(2, len(baseline_set) + 2) == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=root, file_prefix="", recursive=True, limit=2
+                )
+            )
+        )
+        assert {a_b, a_c, a_d_ef} == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a, file_prefix="", recursive=True
+            )
+        )
 
-        assert 2 == len(list(self.data_source.list_keys_nonversioned(
-            directory=a, file_prefix="", recursive=True, limit=2)))
-        assert {a_d_ef} == set(self.data_source.list_keys_nonversioned(directory=a_d, file_prefix="e", recursive=True))
-        assert 1 == len(list(self.data_source.list_keys_nonversioned(
-            directory=a_d, file_prefix="e", recursive=True, limit=2)))
-        assert set() == set(self.data_source.list_keys_nonversioned(directory=a, file_prefix="g", recursive=True))
-        assert 0 == len(list(self.data_source.list_keys_nonversioned(
-            directory=a, file_prefix="g", recursive=True, limit=2)))
-        assert {a_d_ef} == set(self.data_source.list_keys_nonversioned(directory=a_d, file_prefix="e", recursive=True))
-        assert 1 == len(list(self.data_source.list_keys_nonversioned(
-            directory=a_d, file_prefix="e", recursive=True, limit=2)))
+        assert 2 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a, file_prefix="", recursive=True, limit=2
+                )
+            )
+        )
+        assert {a_d_ef} == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a_d, file_prefix="e", recursive=True
+            )
+        )
+        assert 1 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a_d, file_prefix="e", recursive=True, limit=2
+                )
+            )
+        )
+        assert set() == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a, file_prefix="g", recursive=True
+            )
+        )
+        assert 0 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a, file_prefix="g", recursive=True, limit=2
+                )
+            )
+        )
+        assert {a_d_ef} == set(
+            self.data_source.list_keys_nonversioned(
+                directory=a_d, file_prefix="e", recursive=True
+            )
+        )
+        assert 1 == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=a_d, file_prefix="e", recursive=True, limit=2
+                )
+            )
+        )
 
         # Remove some files and test
         self.data_source.delete_all_versions(a_b, recursive=False)
         self.data_source.delete_all_versions(a_c, recursive=False)
         self.data_source.delete_all_versions(a_d_ef, recursive=False)
-        assert baseline_set.union({f}) == set(self.data_source.list_keys_nonversioned(
-            directory=root, file_prefix="", recursive=False))
-        assert baseline_set_recursive.union({f}) == set(self.data_source.list_keys_nonversioned(
-            directory=root, file_prefix="", recursive=True))
-        assert min(2, len(baseline_set) + 1) == len(list(self.data_source.list_keys_nonversioned(
-            directory=root, file_prefix="", recursive=False, limit=2)))
-        assert min(2, len(baseline_set) + 1) == len(list(self.data_source.list_keys_nonversioned(
-            directory=root, file_prefix="", recursive=True, limit=2)))
+        assert baseline_set.union({f}) == set(
+            self.data_source.list_keys_nonversioned(
+                directory=root, file_prefix="", recursive=False
+            )
+        )
+        assert baseline_set_recursive.union({f}) == set(
+            self.data_source.list_keys_nonversioned(
+                directory=root, file_prefix="", recursive=True
+            )
+        )
+        assert min(2, len(baseline_set) + 1) == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=root, file_prefix="", recursive=False, limit=2
+                )
+            )
+        )
+        assert min(2, len(baseline_set) + 1) == len(
+            list(
+                self.data_source.list_keys_nonversioned(
+                    directory=root, file_prefix="", recursive=True, limit=2
+                )
+            )
+        )
 
     def test_get_versioned_key(self):
         data = self.data
@@ -1092,49 +1296,70 @@ class MetadataSourceTester(ABC):
         self.test_memento_1_0 = StorageBackendTester.get_dummy_memento(self.fn_ref_1_0)
         self.fn_ref_2 = fn2.fn_reference().with_args(2)
         self.test_memento_2 = StorageBackendTester.get_dummy_memento(self.fn_ref_2)
-        self.fn_ref_date = fn1.fn_reference().with_args(datetime.datetime(2019, 1, 1).date())
-        self.test_memento_date = StorageBackendTester.get_dummy_memento(self.fn_ref_date)
+        self.fn_ref_date = fn1.fn_reference().with_args(
+            datetime.datetime(2019, 1, 1).date()
+        )
+        self.test_memento_date = StorageBackendTester.get_dummy_memento(
+            self.fn_ref_date
+        )
 
     def teardown_method(self):
         pass
 
     def test_put_and_get_memento(self):
         self.metadata_source.put_memento(self.test_memento_1)
-        result = self.metadata_source.get_mementos([self.fn_ref_1.fn_reference_with_arg_hash()])[0]
-        assert self.test_memento_1.invocation_metadata.fn_reference_with_args.args[0] == \
-            result.invocation_metadata.fn_reference_with_args.args[0]
+        result = self.metadata_source.get_mementos(
+            [self.fn_ref_1.fn_reference_with_arg_hash()]
+        )[0]
+        assert (
+            self.test_memento_1.invocation_metadata.fn_reference_with_args.args[0]
+            == result.invocation_metadata.fn_reference_with_args.args[0]
+        )
 
     def test_put_and_get_memento_with_date(self):
         self.metadata_source.put_memento(self.test_memento_date)
         result = self.metadata_source.get_mementos(
-            [self.fn_ref_date.fn_reference_with_arg_hash()])[0]
-        assert self.test_memento_date.invocation_metadata.fn_reference_with_args.args[0] == \
-            result.invocation_metadata.fn_reference_with_args.args[0]
+            [self.fn_ref_date.fn_reference_with_arg_hash()]
+        )[0]
+        assert (
+            self.test_memento_date.invocation_metadata.fn_reference_with_args.args[0]
+            == result.invocation_metadata.fn_reference_with_args.args[0]
+        )
 
     def test_get_mementos(self):
-        all_three = [self.fn_ref_1.fn_reference_with_arg_hash(),
-                     self.fn_ref_1_0.fn_reference_with_arg_hash(),
-                     self.fn_ref_2.fn_reference_with_arg_hash()]
+        all_three = [
+            self.fn_ref_1.fn_reference_with_arg_hash(),
+            self.fn_ref_1_0.fn_reference_with_arg_hash(),
+            self.fn_ref_2.fn_reference_with_arg_hash(),
+        ]
         assert [None, None, None] == self.metadata_source.get_mementos(all_three)
 
         self.metadata_source.put_memento(self.test_memento_1)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] if mem else None
-                       for mem in self.metadata_source.get_mementos(all_three)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0] if mem else None
+            for mem in self.metadata_source.get_mementos(all_three)
+        ]
         assert [1, None, None] == listed_args
 
         self.metadata_source.put_memento(self.test_memento_1_0)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] if mem else None
-                       for mem in self.metadata_source.get_mementos(all_three)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0] if mem else None
+            for mem in self.metadata_source.get_mementos(all_three)
+        ]
         assert [1, 0, None] == listed_args
 
         self.metadata_source.put_memento(self.test_memento_2)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] if mem else None
-                       for mem in self.metadata_source.get_mementos(all_three)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0] if mem else None
+            for mem in self.metadata_source.get_mementos(all_three)
+        ]
         assert [1, 0, 2] == listed_args
 
     def test_all_mementos_exist(self):
-        full_list = [self.fn_ref_1.fn_reference_with_arg_hash(),
-                     self.fn_ref_2.fn_reference_with_arg_hash()]
+        full_list = [
+            self.fn_ref_1.fn_reference_with_arg_hash(),
+            self.fn_ref_2.fn_reference_with_arg_hash(),
+        ]
         assert not self.metadata_source.all_mementos_exist(full_list)
         self.metadata_source.put_memento(self.test_memento_1)
         assert not self.metadata_source.all_mementos_exist(full_list)
@@ -1146,116 +1371,217 @@ class MetadataSourceTester(ABC):
 
         self.metadata_source.put_memento(self.test_memento_1)
 
-        fn_list = retry_until(lambda: self.metadata_source.list_functions(), lambda x: len(x) > 0)
-        assert [self.fn_ref_1.fn_reference.qualified_name] == [f.qualified_name for f in fn_list]
+        fn_list = retry_until(
+            lambda: self.metadata_source.list_functions(), lambda x: len(x) > 0
+        )
+        assert [self.fn_ref_1.fn_reference.qualified_name] == [
+            f.qualified_name for f in fn_list
+        ]
 
         self.metadata_source.put_memento(self.test_memento_2)
-        fn_list = retry_until(lambda: self.metadata_source.list_functions(), lambda x: len(x) > 0)
-        assert [self.fn_ref_1.fn_reference.qualified_name, self.fn_ref_2.fn_reference.qualified_name] ==\
-               [f.qualified_name for f in fn_list]
+        fn_list = retry_until(
+            lambda: self.metadata_source.list_functions(), lambda x: len(x) > 0
+        )
+        assert [
+            self.fn_ref_1.fn_reference.qualified_name,
+            self.fn_ref_2.fn_reference.qualified_name,
+        ] == [f.qualified_name for f in fn_list]
 
     def test_list_mementos(self):
-        assert [] == self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)
+        assert [] == self.metadata_source.list_mementos(
+            self.fn_ref_1.fn_reference, None
+        )
         self.metadata_source.put_memento(self.test_memento_1)
-        retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None),
-                    lambda x: len(x) == 1)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)]
+        retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            ),
+            lambda x: len(x) == 1,
+        )
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            )
+        ]
         assert {1} == set(listed_args)
         self.metadata_source.put_memento(self.test_memento_1_0)
-        retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None),
-                    lambda x: len(x) == 2)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)]
+        retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            ),
+            lambda x: len(x) == 2,
+        )
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            )
+        ]
         assert {0, 1} == set(listed_args)
         # Test limit
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, 1)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, 1)
+        ]
         assert 1 == len(listed_args)
 
     def test_write_and_read_metadata(self):
         self.metadata_source.put_memento(self.test_memento_1)
-        self.metadata_source.write_metadata(self.test_memento_1.invocation_metadata.
-                                            fn_reference_with_args.fn_reference_with_arg_hash(),
-                                            "key1", "value1".encode("utf-8"),
-                                            stored_with_data=False)
+        self.metadata_source.write_metadata(
+            self.test_memento_1.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+            "key1",
+            "value1".encode("utf-8"),
+            stored_with_data=False,
+        )
         assert "value1" == self.metadata_source.read_metadata(
-            self.test_memento_1.invocation_metadata.fn_reference_with_args.
-            fn_reference_with_arg_hash(), "key1", retry_on_none=True).decode("utf-8")
+            self.test_memento_1.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+            "key1",
+            retry_on_none=True,
+        ).decode("utf-8")
 
     def test_write_and_read_large_metadata(self):
         # ~ 5 MB of data:
         data = "0123456789" * (1024 * 512)
         self.metadata_source.put_memento(self.test_memento_1)
-        self.metadata_source.write_metadata(self.test_memento_1.invocation_metadata.
-                                            fn_reference_with_args.fn_reference_with_arg_hash(),
-                                            "key1", data.encode("utf-8"),
-                                            stored_with_data=False)
+        self.metadata_source.write_metadata(
+            self.test_memento_1.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+            "key1",
+            data.encode("utf-8"),
+            stored_with_data=False,
+        )
         assert data == self.metadata_source.read_metadata(
-            self.test_memento_1.invocation_metadata.fn_reference_with_args.
-            fn_reference_with_arg_hash(), "key1", retry_on_none=True).decode("utf-8")
+            self.test_memento_1.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+            "key1",
+            retry_on_none=True,
+        ).decode("utf-8")
 
     def test_write_and_read_metadata_store_with_data(self):
         self.metadata_source.put_memento(self.test_memento_1)
-        self.metadata_source.write_metadata(self.test_memento_1.invocation_metadata.
-                                            fn_reference_with_args.fn_reference_with_arg_hash(),
-                                            "key1", "value1".encode("utf-8"),
-                                            stored_with_data=True)
-        assert isinstance(self.metadata_source.read_metadata(
-            self.test_memento_1.invocation_metadata.fn_reference_with_args.
-            fn_reference_with_arg_hash(), "key1", retry_on_none=True), ResultIsWithData)
+        self.metadata_source.write_metadata(
+            self.test_memento_1.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+            "key1",
+            "value1".encode("utf-8"),
+            stored_with_data=True,
+        )
+        assert isinstance(
+            self.metadata_source.read_metadata(
+                self.test_memento_1.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
+                "key1",
+                retry_on_none=True,
+            ),
+            ResultIsWithData,
+        )
 
     def test_forget_call(self):
         self.metadata_source.put_memento(self.test_memento_1)
         self.metadata_source.put_memento(self.test_memento_1_0)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            )
+        ]
         assert {0, 1} == set(listed_args)
         self.metadata_source.forget_call(self.fn_ref_1_0.fn_reference_with_arg_hash())
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            )
+        ]
         assert {1} == set(listed_args)
         self.metadata_source.forget_call(self.fn_ref_1.fn_reference_with_arg_hash())
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            )
+        ]
         assert set() == set(listed_args)
 
     def test_forget_everything(self):
         self.metadata_source.put_memento(self.test_memento_1)
         self.metadata_source.put_memento(self.test_memento_1_0)
         self.metadata_source.put_memento(self.test_memento_2)
-        retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None),
-                    lambda x: set(mem.invocation_metadata.fn_reference_with_args.args[0]
-                                  for mem in x) == {0, 1})
-        retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_2.fn_reference, None),
-                    lambda x: set(mem.invocation_metadata.fn_reference_with_args.args[0]
-                                  for mem in x) == {2})
+        retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            ),
+            lambda x: set(
+                mem.invocation_metadata.fn_reference_with_args.args[0] for mem in x
+            )
+            == {0, 1},
+        )
+        retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_2.fn_reference, None
+            ),
+            lambda x: set(
+                mem.invocation_metadata.fn_reference_with_args.args[0] for mem in x
+            )
+            == {2},
+        )
 
         self.metadata_source.forget_everything()
-        retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None),
-                    lambda x: set(mem.invocation_metadata.fn_reference_with_args.args[0]
-                                  for mem in x) == set())
-        retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_2.fn_reference, None),
-                    lambda x: set(mem.invocation_metadata.fn_reference_with_args.args[0]
-                                  for mem in x) == set())
+        retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            ),
+            lambda x: set(
+                mem.invocation_metadata.fn_reference_with_args.args[0] for mem in x
+            )
+            == set(),
+        )
+        retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_2.fn_reference, None
+            ),
+            lambda x: set(
+                mem.invocation_metadata.fn_reference_with_args.args[0] for mem in x
+            )
+            == set(),
+        )
 
     def test_forget_function(self):
         self.metadata_source.put_memento(self.test_memento_1)
         self.metadata_source.put_memento(self.test_memento_1_0)
         self.metadata_source.put_memento(self.test_memento_2)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            )
+        ]
         assert {0, 1} == set(listed_args)
-        list_result = retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_2.fn_reference, None),
-                                  lambda x: len(x) == 1)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in list_result]
+        list_result = retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_2.fn_reference, None
+            ),
+            lambda x: len(x) == 1,
+        )
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in list_result
+        ]
         assert {2} == set(listed_args)
 
         self.metadata_source.forget_function(self.fn_ref_1.fn_reference)
-        listed_result = retry_until(lambda: self.metadata_source.list_mementos(self.fn_ref_1.fn_reference, None),
-                                    lambda x: len(x) == 0)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in listed_result]
+        listed_result = retry_until(
+            lambda: self.metadata_source.list_mementos(
+                self.fn_ref_1.fn_reference, None
+            ),
+            lambda x: len(x) == 0,
+        )
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in listed_result
+        ]
         assert set() == set(listed_args)
-        listed_args = [mem.invocation_metadata.fn_reference_with_args.args[0] for mem in
-                       self.metadata_source.list_mementos(self.fn_ref_2.fn_reference, None)]
+        listed_args = [
+            mem.invocation_metadata.fn_reference_with_args.args[0]
+            for mem in self.metadata_source.list_mementos(
+                self.fn_ref_2.fn_reference, None
+            )
+        ]
         assert {2} == set(listed_args)

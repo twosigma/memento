@@ -18,7 +18,12 @@ import tempfile
 import pytest
 
 import twosigma.memento as m
-from twosigma.memento import RunnerBackend, Environment, ConfigurationRepository, FunctionCluster  # noqa: F401
+from twosigma.memento import (
+    RunnerBackend,
+    Environment,
+    ConfigurationRepository,
+    FunctionCluster,
+)  # noqa: F401
 from twosigma.memento.runner_null import NullRunnerBackend
 from twosigma.memento.storage_null import NullStorageBackend
 
@@ -36,22 +41,30 @@ class TestRunnerNull:
 
     """
 
-    backend = None      # type: RunnerBackend
+    backend = None  # type: RunnerBackend
 
     def setup_method(self):
         self.original_env = m.Environment.get()
         self.base_path = tempfile.mkdtemp(prefix="memento_runner_null_test")
         self.data_path = "{}/data".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(name="cluster1",
-                                                storage=NullStorageBackend(),
-                                                runner=NullRunnerBackend())
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1",
+                                storage=NullStorageBackend(),
+                                runner=NullRunnerBackend(),
+                            )
+                        },
+                    )
+                ],
             )
-        ]))
+        )
         self.cluster = m.Environment.get().get_cluster("cluster1")
         self.backend = self.cluster.runner
 

@@ -35,16 +35,15 @@ class ResourceHandle:
         self.version = version
 
     def __eq__(self, o: "ResourceHandle"):
-        return isinstance(o, ResourceHandle) and \
-            self.__dict__ == o.__dict__
+        return isinstance(o, ResourceHandle) and self.__dict__ == o.__dict__
 
     def __hash__(self):
         return hash((self.resource_type, self.url, self.version))
 
     def __repr__(self):
         return "ResourceHandle(resource_type={}, url={}, version={})".format(
-            repr(self.resource_type),
-            repr(self.url), repr(self.version))
+            repr(self.resource_type), repr(self.url), repr(self.version)
+        )
 
     def __str__(self):
         return self.__repr__()

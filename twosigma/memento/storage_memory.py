@@ -28,8 +28,11 @@ from collections import defaultdict
 from typing import Iterable, List, Optional, Dict  # noqa: F401
 
 from .metadata import Memento
-from .reference import FunctionReference, FunctionReferenceWithArguments, \
-    FunctionReferenceWithArgHash
+from .reference import (
+    FunctionReference,
+    FunctionReferenceWithArguments,
+    FunctionReferenceWithArgHash,
+)
 from .types import FunctionNotFoundError, VersionedDataSourceKey
 from .storage import StorageBackend
 
@@ -59,13 +62,21 @@ class MemoryStorageBackend(StorageBackend):
 
     @staticmethod
     def _get_memento_key(fn_with_arg_hash: FunctionReferenceWithArgHash) -> str:
-        return fn_with_arg_hash.fn_reference.qualified_name + "/" + fn_with_arg_hash.arg_hash
+        return (
+            fn_with_arg_hash.fn_reference.qualified_name
+            + "/"
+            + fn_with_arg_hash.arg_hash
+        )
 
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         results = []
         for fn_ref_with_arg_hash in fns:
             try:
-                memento_dict = self.mementos[fn_ref_with_arg_hash.fn_reference.qualified_name]
+                memento_dict = self.mementos[
+                    fn_ref_with_arg_hash.fn_reference.qualified_name
+                ]
                 memento = memento_dict.get(fn_ref_with_arg_hash.arg_hash)
             except FunctionNotFoundError:
                 memento = None
@@ -73,22 +84,33 @@ class MemoryStorageBackend(StorageBackend):
         return results
 
     def read_result(self, memento: Memento) -> object:
-        return self.result[self._get_memento_key(
-            memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash())]
+        return self.result[
+            self._get_memento_key(
+                memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash()
+            )
+        ]
 
     def make_url_for_result(self, memento: Memento) -> Optional[str]:
         return memento.content_key
 
-    def read_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                      retry_on_none=False) -> bytes:
+    def read_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        retry_on_none=False,
+    ) -> bytes:
         # Ignore retry_on_none since the in-memory metadata store is consistent.
         memento_key = self._get_memento_key(fn_with_arg_hash)
         metadata_dict = self.metadata[memento_key]  # type: Dict[str, bytes]
         return metadata_dict.get(key)
 
-    def write_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash,
-                       key: str, value: bytes,
-                       store_with_content_key: Optional[VersionedDataSourceKey] = None):
+    def write_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        value: bytes,
+        store_with_content_key: Optional[VersionedDataSourceKey] = None,
+    ):
         if self.read_only:
             raise ValueError("Cannot write metadata to a read-only storage backend")
         memento_key = self._get_memento_key(fn_with_arg_hash)
@@ -100,11 +122,17 @@ class MemoryStorageBackend(StorageBackend):
         return memento_dict and arg_hash in memento_dict
 
     def is_all_memoized(self, fns: Iterable[FunctionReferenceWithArguments]) -> bool:
-        return all([self.is_memoized(fn_ref_with_arg.fn_reference, fn_ref_with_arg.arg_hash)
-                    for fn_ref_with_arg in fns])
+        return all(
+            [
+                self.is_memoized(fn_ref_with_arg.fn_reference, fn_ref_with_arg.arg_hash)
+                for fn_ref_with_arg in fns
+            ]
+        )
 
     def list_functions(self) -> List[FunctionReference]:
-        return [FunctionReference.from_qualified_name(key) for key in self.mementos.keys()]
+        return [
+            FunctionReference.from_qualified_name(key) for key in self.mementos.keys()
+        ]
 
     def list_mementos(self, fn: FunctionReference, limit: int = None) -> List[Memento]:
         return list(self.mementos[fn.qualified_name].values())[0:limit]
@@ -112,12 +140,16 @@ class MemoryStorageBackend(StorageBackend):
     def memoize(self, key_override: str, memento: Memento, result: object) -> None:
         if self.read_only:
             return
-        memento_key = self._get_memento_key(memento.invocation_metadata.fn_reference_with_args.
-                                            fn_reference_with_arg_hash())
-        memento.content_key = VersionedDataSourceKey(key_override, "") if key_override else None
+        memento_key = self._get_memento_key(
+            memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash()
+        )
+        memento.content_key = (
+            VersionedDataSourceKey(key_override, "") if key_override else None
+        )
         self.result[memento_key] = result
-        qualified_name = memento.invocation_metadata.fn_reference_with_args.\
-            fn_reference.qualified_name
+        qualified_name = (
+            memento.invocation_metadata.fn_reference_with_args.fn_reference.qualified_name
+        )
         arg_hash = memento.invocation_metadata.fn_reference_with_args.arg_hash
         self.mementos[qualified_name][arg_hash] = memento
 
@@ -147,14 +179,13 @@ class MemoryStorageBackend(StorageBackend):
             raise ValueError("Cannot forget with a storage backend that is read-only")
         qualified_name = fn_reference.qualified_name
         for memento in self.list_mementos(fn_reference):
-            self.forget_call(memento.invocation_metadata.fn_reference_with_args.
-                             fn_reference_with_arg_hash())
+            self.forget_call(
+                memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash()
+            )
         self.mementos[qualified_name].clear()
 
     def to_dict(self):
-        config = {
-            "type": "memory"
-        }
+        config = {"type": "memory"}
         if self.read_only is not None:
             config["readonly"] = self.read_only
         return config

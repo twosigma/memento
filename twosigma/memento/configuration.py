@@ -46,21 +46,26 @@ _DEFAULT_RUNNER_CONFIG = {}
 
 # Bytes used to salt all function hashes.
 # WARNING: Changing anything in this environment hash will force re-evaluation of everything!
-ENVIRONMENT_HASH_BYTES =\
-    hashlib.sha256(json.dumps(
+ENVIRONMENT_HASH_BYTES = hashlib.sha256(
+    json.dumps(
         {
             "memento_serialization_version": 7,  # Updated when a backwards-incompatible
-                                                 # change is made to the file format
+            # change is made to the file format
             "packages": {
-                "pandas": pandas.__version__[0:pandas.__version__.find(".")]  # major version
-            }
+                "pandas": pandas.__version__[
+                    0 : pandas.__version__.find(".")
+                ]  # major version
+            },
         },
-        sort_keys=True
-    ).encode("utf-8")).digest()
+        sort_keys=True,
+    ).encode("utf-8")
+).digest()
 
 # Global collection of registered functions, persists beyond environment creation and destruction
 _registered_function_names = set()  # type: Set[str]
-_registered_functions = defaultdict(lambda: list())  # type: Dict[str, List[MementoFunctionType]]
+_registered_functions = defaultdict(
+    lambda: list()
+)  # type: Dict[str, List[MementoFunctionType]]
 
 # environment is lazily-loaded the first time Environment.get() is called.
 environment = None
@@ -87,16 +92,22 @@ def _load_config(base_dir: str, config: Union[str, Dict], **kwargs) -> Dict:
         config_path = Path(config)
         if not config_path.is_absolute():
             if base_dir_path is None:
-                raise FileNotFoundError("Could not evaluate relative path '{}' "
-                                        "as there is no base directory defined".format(config_path))
+                raise FileNotFoundError(
+                    "Could not evaluate relative path '{}' "
+                    "as there is no base directory defined".format(config_path)
+                )
             # this is a relative path. Prepend base_dir
             config_path = base_dir_path.joinpath(config_path)
 
         if config_path.is_dir():
-            raise FileNotFoundError("Expected file but got directory: {}".format(config_path))
+            raise FileNotFoundError(
+                "Expected file but got directory: {}".format(config_path)
+            )
 
         if not config_path.is_file():
-            raise FileNotFoundError("Could not find configuration file: {}".format(config_path))
+            raise FileNotFoundError(
+                "Could not find configuration file: {}".format(config_path)
+            )
 
         # Open as a jinja2 template and perform parameter substitution
         with config_path.open("r") as f:
@@ -104,10 +115,16 @@ def _load_config(base_dir: str, config: Union[str, Dict], **kwargs) -> Dict:
 
         if config_path.name.endswith(".json"):
             result = json.load(substituted_file)
-        elif config_path.name.endswith(".yaml") or config_path.name.endswith(".yml") or config_path.name.endswith(".jinja"):
+        elif (
+            config_path.name.endswith(".yaml")
+            or config_path.name.endswith(".yml")
+            or config_path.name.endswith(".jinja")
+        ):
             result = yaml.safe_load(substituted_file)
         else:
-            raise IOError("Unknown config file extension for file {}".format(config_path))
+            raise IOError(
+                "Unknown config file extension for file {}".format(config_path)
+            )
 
         result["base_dir"] = str(config_path.parent)
 
@@ -157,9 +174,16 @@ class FunctionCluster:
 
     """
 
-    def __init__(self, config: Dict = None, name: str = None, description: str = None,
-                 maintainer: str = None, documentation: str = None, storage: StorageBackend = None,
-                 runner: RunnerBackend = None):
+    def __init__(
+        self,
+        config: Dict = None,
+        name: str = None,
+        description: str = None,
+        maintainer: str = None,
+        documentation: str = None,
+        storage: StorageBackend = None,
+        runner: RunnerBackend = None,
+    ):
         """
         Create a new DataFunctionCluster from the provided configuration.
 
@@ -207,24 +231,32 @@ class FunctionCluster:
         if storage is not None:
             self.storage = storage
         elif "storage" not in self.config:
-            self.storage = StorageBackend.create(_DEFAULT_STORAGE_TYPE, _DEFAULT_STORAGE_CONFIG)
+            self.storage = StorageBackend.create(
+                _DEFAULT_STORAGE_TYPE, _DEFAULT_STORAGE_CONFIG
+            )
         else:
             storage_config = self.config["storage"]
             if "type" not in storage_config:
-                raise ValueError("Missing required parameter 'type' in storage "
-                                 "configuration {}".format(self.name))
+                raise ValueError(
+                    "Missing required parameter 'type' in storage "
+                    "configuration {}".format(self.name)
+                )
             storage_type = storage_config["type"]
             self.storage = StorageBackend.create(storage_type, storage_config)
 
         if runner is not None:
             self.runner = runner
         elif "runner" not in self.config:
-            self.runner = RunnerBackend.create(_DEFAULT_RUNNER_TYPE, _DEFAULT_RUNNER_CONFIG)
+            self.runner = RunnerBackend.create(
+                _DEFAULT_RUNNER_TYPE, _DEFAULT_RUNNER_CONFIG
+            )
         else:
             runner_config = self.config["runner"]
             if "type" not in runner_config:
-                raise ValueError("Missing required parameter 'type' in runner "
-                                 "configuration {}".format(self.name))
+                raise ValueError(
+                    "Missing required parameter 'type' in runner "
+                    "configuration {}".format(self.name)
+                )
             runner_type = runner_config["type"]
             self.runner = RunnerBackend.create(runner_type, runner_config)
 
@@ -237,7 +269,7 @@ class FunctionCluster:
         config = {
             "name": self.name,
             "storage": self.storage.to_dict(),
-            "runner": self.runner.to_dict()
+            "runner": self.runner.to_dict(),
         }
         if self.description is not None:
             config["description"] = self.description
@@ -254,19 +286,23 @@ class _DefaultFunctionCluster(FunctionCluster):
 
     """
 
-    def __init__(self, env: 'Environment'):
+    def __init__(self, env: "Environment"):
 
-        env_path = env.get_base_dir() or str(Path("~").expanduser().joinpath(".memento", "env", env.name))
+        env_path = env.get_base_dir() or str(
+            Path("~").expanduser().joinpath(".memento", "env", env.name)
+        )
         base_path = Path(env_path).joinpath("cluster", "default")
-        super().__init__({
-            "name": "default",
-            "description": "Default function cluster",
-            "storage": {
-                "type": "filesystem",
-                "path": str(base_path),
-                "readonly": False
+        super().__init__(
+            {
+                "name": "default",
+                "description": "Default function cluster",
+                "storage": {
+                    "type": "filesystem",
+                    "path": str(base_path),
+                    "readonly": False,
+                },
             }
-        })
+        )
 
 
 class ConfigurationRepository:
@@ -307,11 +343,17 @@ class ConfigurationRepository:
     clusters = None  # type: Dict[str, FunctionCluster]
     modules = None  # type: List[str]
 
-    def __init__(self, config: Dict = None, name: str = None, base_dir: str = None,
-                 description: str = None,
-                 maintainer: str = None, documentation: str = None,
-                 clusters: Dict[str, FunctionCluster] = None,
-                 modules: List[str] = None):
+    def __init__(
+        self,
+        config: Dict = None,
+        name: str = None,
+        base_dir: str = None,
+        description: str = None,
+        maintainer: str = None,
+        documentation: str = None,
+        clusters: Dict[str, FunctionCluster] = None,
+        modules: List[str] = None,
+    ):
         """
         Create a new ConfigurationRepository from the config file located at
         the provided path.
@@ -344,7 +386,9 @@ class ConfigurationRepository:
         self.documentation = self.config.get("documentation", None)
         self.clusters = dict()
         for cluster_name, config_path in self.config.get("clusters", {}).items():
-            self.clusters[cluster_name] = FunctionCluster(_load_config(self.base_dir, config_path))
+            self.clusters[cluster_name] = FunctionCluster(
+                _load_config(self.base_dir, config_path)
+            )
         self.modules = self.config.get("modules", None)
 
         if name is not None:
@@ -376,9 +420,7 @@ class ConfigurationRepository:
         config = {
             "name": self.name,
             "modules": self.modules,
-            "clusters": {
-                k: v.to_dict() for (k, v) in self.clusters.items()
-            }
+            "clusters": {k: v.to_dict() for (k, v) in self.clusters.items()},
         }
         if self.base_dir is not None:
             config["base_dir"] = self.base_dir
@@ -398,7 +440,8 @@ class ConfigurationRepository:
 
         """
         return ConfigurationRepository(
-            _load_config(os.path.dirname(path), os.path.basename(path), **kwargs))
+            _load_config(os.path.dirname(path), os.path.basename(path), **kwargs)
+        )
 
 
 class Environment:
@@ -427,8 +470,13 @@ class Environment:
     a message when the environment changes
     """
 
-    def __init__(self, config: Dict = None, name: str = None, base_dir: str = None,
-                 repos: List[ConfigurationRepository] = None):
+    def __init__(
+        self,
+        config: Dict = None,
+        name: str = None,
+        base_dir: str = None,
+        repos: List[ConfigurationRepository] = None,
+    ):
         """
         Create a new environment from the provided configuration object.
         The expected form of the config object is:
@@ -463,8 +511,10 @@ class Environment:
         self.config = config
         self.name = config.get("name", "default")
         self.base_dir = config.get("base_dir", None)
-        self.repos = [ConfigurationRepository(_load_config(self.base_dir, repo_config))
-                      for repo_config in config.get("repos", [])]
+        self.repos = [
+            ConfigurationRepository(_load_config(self.base_dir, repo_config))
+            for repo_config in config.get("repos", [])
+        ]
 
         if name is not None:
             self.name = name
@@ -522,7 +572,9 @@ class Environment:
         # Check if cluster is locked
         cluster = Environment.get().get_cluster(cluster_name)
         if cluster is not None and cluster.locked:
-            raise ValueError("Cluster {} is locked to new functions".format(cluster_name))
+            raise ValueError(
+                "Cluster {} is locked to new functions".format(cluster_name)
+            )
 
         # Use "" as a key if this is the default cluster
         if cluster_name is None:
@@ -584,16 +636,13 @@ class Environment:
         Return a dict representation of this environment
 
         """
-        config = {
-            "name": self.name,
-            "repos": [repo.to_dict() for repo in self.repos]
-        }
+        config = {"name": self.name, "repos": [repo.to_dict() for repo in self.repos]}
         if self.base_dir is not None:
             config["base_dir"] = self.base_dir
         return config
 
     @classmethod
-    def set(cls, config: ['Environment', str, object]):
+    def set(cls, config: ["Environment", str, object]):
         """
         Switch Memento's default environment.
 
@@ -605,11 +654,14 @@ class Environment:
 
         """
         global environment
-        environment = config if isinstance(config, Environment) \
+        environment = (
+            config
+            if isinstance(config, Environment)
             else Environment(_load_config(os.getcwd(), config))
+        )
 
     @classmethod
-    def get(cls) -> 'Environment':
+    def get(cls) -> "Environment":
         """
         Return Memento's current default environment.
 
@@ -634,7 +686,9 @@ def _load_environment() -> Environment:
     memento_env = os.getenv("MEMENTO_ENV")
     if not memento_env:
         # Search for default environment file
-        default_config_file = Path("~").expanduser().joinpath(".memento", "env", "default", "env")
+        default_config_file = (
+            Path("~").expanduser().joinpath(".memento", "env", "default", "env")
+        )
         for ext in [".json", ".yaml"]:
             filename = default_config_file.with_name(default_config_file.name + ext)
             if filename.is_file():

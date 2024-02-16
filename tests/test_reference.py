@@ -24,8 +24,11 @@ import pytz
 from twosigma.memento import memento_function, Environment, MementoFunction
 from twosigma.memento.exception import DependencyNotFoundError
 from twosigma.memento.external import UnboundExternalMementoFunction
-from twosigma.memento.reference import FunctionReference, FunctionReferenceWithArguments, \
-    ArgumentHasher
+from twosigma.memento.reference import (
+    FunctionReference,
+    FunctionReferenceWithArguments,
+    ArgumentHasher,
+)
 
 _called = False
 
@@ -58,6 +61,7 @@ def _test_dep_depends_on_nonexistent_auto() -> int:
     dependency auto-detection logic, but does not exist as a function.
 
     """
+
     def internal_fn():
         return 42
 
@@ -116,7 +120,7 @@ class TestReference:
         self.env_before = Environment.get()
         self.env_dir = tempfile.mkdtemp(prefix="memoizeTest")
         env_file = "{}/env.json".format(self.env_dir)
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             print("""{"name": "test"}""", file=f)
         Environment.set(env_file)
         _called = False
@@ -126,7 +130,9 @@ class TestReference:
         Environment.set(self.env_before)
 
     def test_parse_qualified_name(self):
-        parts = FunctionReference.parse_qualified_name("cluster::module.name:fn_name#hash")
+        parts = FunctionReference.parse_qualified_name(
+            "cluster::module.name:fn_name#hash"
+        )
         assert "cluster" == parts["cluster"]
         assert "module.name" == parts["module"]
         assert "fn_name" == parts["function"]
@@ -134,27 +140,48 @@ class TestReference:
 
     def test_reference(self):
         ref = FunctionReference.from_qualified_name("tests.test_reference:_test_method")
-        assert "tests.test_reference:_test_method" == ref.qualified_name[0:ref.qualified_name.find("#")]
-        assert "tests.test_reference:_test_method" == \
-               ref.qualified_name_without_cluster[0:ref.qualified_name_without_cluster.find("#")]
+        assert (
+            "tests.test_reference:_test_method"
+            == ref.qualified_name[0 : ref.qualified_name.find("#")]
+        )
+        assert (
+            "tests.test_reference:_test_method"
+            == ref.qualified_name_without_cluster[
+                0 : ref.qualified_name_without_cluster.find("#")
+            ]
+        )
         assert "tests.test_reference" == ref.module
         assert "_test_method" == ref.function_name
         assert ref.cluster_name is None
         assert ref.memento_fn.version() is not None
 
         ref = FunctionReference(_test_method)
-        assert "tests.test_reference:_test_method" == ref.qualified_name[0:ref.qualified_name.find("#")]
-        assert "tests.test_reference:_test_method" == \
-               ref.qualified_name_without_cluster[0:ref.qualified_name_without_cluster.find("#")]
+        assert (
+            "tests.test_reference:_test_method"
+            == ref.qualified_name[0 : ref.qualified_name.find("#")]
+        )
+        assert (
+            "tests.test_reference:_test_method"
+            == ref.qualified_name_without_cluster[
+                0 : ref.qualified_name_without_cluster.find("#")
+            ]
+        )
         assert "tests.test_reference" == ref.module
         assert "_test_method" == ref.function_name
         assert ref.cluster_name is None
         assert ref.memento_fn.version() is not None
 
         ref = FunctionReference(_test_method, cluster_name="cluster1")
-        assert "cluster1::tests.test_reference:_test_method" == ref.qualified_name[0:ref.qualified_name.find("#")]
-        assert "tests.test_reference:_test_method" == \
-            ref.qualified_name_without_cluster[0:ref.qualified_name_without_cluster.find("#")]
+        assert (
+            "cluster1::tests.test_reference:_test_method"
+            == ref.qualified_name[0 : ref.qualified_name.find("#")]
+        )
+        assert (
+            "tests.test_reference:_test_method"
+            == ref.qualified_name_without_cluster[
+                0 : ref.qualified_name_without_cluster.find("#")
+            ]
+        )
         assert "tests.test_reference" == ref.module
         assert "_test_method" == ref.function_name
         assert "cluster1" == ref.cluster_name
@@ -163,7 +190,10 @@ class TestReference:
     def test_version(self):
         ref = _test_method_2.fn_reference()
         assert "tests.test_reference:_test_method_2#2" == ref.qualified_name
-        assert "tests.test_reference:_test_method_2#2" == ref.qualified_name_without_cluster
+        assert (
+            "tests.test_reference:_test_method_2#2"
+            == ref.qualified_name_without_cluster
+        )
         assert "tests.test_reference" == ref.module
         assert "_test_method_2" == ref.function_name
         assert "2" == ref.memento_fn.version()
@@ -171,15 +201,23 @@ class TestReference:
 
         ref = FunctionReference(_test_method_2, cluster_name="cluster1", version="2")
         assert "cluster1::tests.test_reference:_test_method_2#2" == ref.qualified_name
-        assert "tests.test_reference:_test_method_2#2" == ref.qualified_name_without_cluster
+        assert (
+            "tests.test_reference:_test_method_2#2"
+            == ref.qualified_name_without_cluster
+        )
         assert "tests.test_reference" == ref.module
         assert "_test_method_2" == ref.function_name
         assert "2" == ref.memento_fn.version()
         assert ref.memento_fn.code_hash is None
 
-        ref = FunctionReference.from_qualified_name("tests.test_reference:_test_method_2#2")
+        ref = FunctionReference.from_qualified_name(
+            "tests.test_reference:_test_method_2#2"
+        )
         assert "tests.test_reference:_test_method_2#2" == ref.qualified_name
-        assert "tests.test_reference:_test_method_2#2" == ref.qualified_name_without_cluster
+        assert (
+            "tests.test_reference:_test_method_2#2"
+            == ref.qualified_name_without_cluster
+        )
         assert "tests.test_reference" == ref.module
         assert "_test_method_2" == ref.function_name
         assert ref.cluster_name is None
@@ -191,7 +229,8 @@ class TestReference:
         # If the version does not match, check that reference is treated as external
         assert FunctionReference.from_qualified_name(
             "unknown_cluster::test_reference:_test_method_2#3",
-            parameter_names=["x", "y"]).external
+            parameter_names=["x", "y"],
+        ).external
 
     def test_find(self):
         ref = FunctionReference(_test_method, cluster_name="cluster1")
@@ -204,16 +243,18 @@ class TestReference:
 
     def test_reference_with_args(self):
         ref1 = FunctionReference(_test_method_2, cluster_name="cluster1")
-        ref1a = FunctionReferenceWithArguments(fn_reference=ref1, args=(1,), kwargs={"y": 2},
-                                               context_args={"z": 3})
+        ref1a = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(1,), kwargs={"y": 2}, context_args={"z": 3}
+        )
 
         assert ref1.qualified_name == ref1a.fn_reference.qualified_name
         assert (1,) == ref1a.args
         assert {"y": 2} == ref1a.kwargs
         assert {"z": 3} == ref1a.context_args
 
-        ref1b = FunctionReferenceWithArguments(fn_reference=ref1, args=(), kwargs={"x": 1, "y": 2},
-                                               context_args={"z": 3})
+        ref1b = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(), kwargs={"x": 1, "y": 2}, context_args={"z": 3}
+        )
 
         assert ref1.qualified_name == ref1b.fn_reference.qualified_name
         assert () == ref1b.args
@@ -224,27 +265,41 @@ class TestReference:
 
     def test_context_args_affect_hash(self):
         ref1 = FunctionReference(_test_method_2, cluster_name="cluster1")
-        ref1a = FunctionReferenceWithArguments(fn_reference=ref1, args=(1,), kwargs={"y": 2})
-        ref1b = FunctionReferenceWithArguments(fn_reference=ref1, args=(1,), kwargs={"y": 2},
-                                               context_args={"z": 3})
+        ref1a = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(1,), kwargs={"y": 2}
+        )
+        ref1b = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(1,), kwargs={"y": 2}, context_args={"z": 3}
+        )
         assert ref1a.arg_hash != ref1b.arg_hash
 
     def test_compute_args(self):
         ref1 = FunctionReference(_test_method_2, cluster_name="cluster1")
-        hash1 = FunctionReferenceWithArguments(fn_reference=ref1, args=(1, 2), kwargs={}).arg_hash
-        hash2 = FunctionReferenceWithArguments(fn_reference=ref1, args=(2, 3), kwargs={}).arg_hash
+        hash1 = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(1, 2), kwargs={}
+        ).arg_hash
+        hash2 = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(2, 3), kwargs={}
+        ).arg_hash
         assert hash1 != hash2
-        hash3 = FunctionReferenceWithArguments(fn_reference=ref1, args=(2, 3), kwargs={}).arg_hash
+        hash3 = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(2, 3), kwargs={}
+        ).arg_hash
         assert hash2 == hash3
         hash4 = FunctionReferenceWithArguments(
-            fn_reference=_test_method_2.partial(2).fn_reference(), args=(3,), kwargs={}).arg_hash
+            fn_reference=_test_method_2.partial(2).fn_reference(), args=(3,), kwargs={}
+        ).arg_hash
         assert hash3 == hash4
         # Test that args are mapped to kwargs
-        hash5 = FunctionReferenceWithArguments(fn_reference=ref1, args=(2,), kwargs={"y": 3}).arg_hash
+        hash5 = FunctionReferenceWithArguments(
+            fn_reference=ref1, args=(2,), kwargs={"y": 3}
+        ).arg_hash
         assert hash2 == hash5
         hash6 = FunctionReferenceWithArguments(
             fn_reference=_test_method_2.partial(x=2).fn_reference(),
-            args=(), kwargs={"y": 3}).arg_hash
+            args=(),
+            kwargs={"y": 3},
+        ).arg_hash
         assert hash2 == hash6
 
     def test_timestamp_arg(self):
@@ -253,7 +308,10 @@ class TestReference:
         t2 = t1.to_pydatetime()
 
         assert fn1(t1) == fn1(t2)
-        assert fn1.fn_reference().with_args(t1).arg_hash == fn1.fn_reference().with_args(t2).arg_hash
+        assert (
+            fn1.fn_reference().with_args(t1).arg_hash
+            == fn1.fn_reference().with_args(t2).arg_hash
+        )
 
     def test_arg_hasher_normalize(self):
         assert ArgumentHasher.normalize(None) is None
@@ -262,13 +320,20 @@ class TestReference:
         assert 42 == ArgumentHasher.normalize(42)
         f = cast(float, ArgumentHasher.normalize(123.45))
         assert pytest.approx(123.45) == f
-        assert datetime.date(2019, 4, 3) == ArgumentHasher.normalize(datetime.date(2019, 4, 3))
-        assert datetime.datetime(2019, 4, 3, 12, 34, 56) == \
-               ArgumentHasher.normalize(datetime.datetime(2019, 4, 3, 12, 34, 56))
-        assert datetime.datetime(2019, 4, 3, 12, 34, 56, 500000) == \
-               ArgumentHasher.normalize(datetime.datetime(2019, 4, 3, 12, 34, 56, 500000))
-        assert datetime.datetime(2019, 4, 3, 12, 34, 56, tzinfo=pytz.UTC) == \
-               ArgumentHasher.normalize(datetime.datetime(2019, 4, 3, 12, 34, 56, tzinfo=pytz.UTC))
+        assert datetime.date(2019, 4, 3) == ArgumentHasher.normalize(
+            datetime.date(2019, 4, 3)
+        )
+        assert datetime.datetime(2019, 4, 3, 12, 34, 56) == ArgumentHasher.normalize(
+            datetime.datetime(2019, 4, 3, 12, 34, 56)
+        )
+        assert datetime.datetime(
+            2019, 4, 3, 12, 34, 56, 500000
+        ) == ArgumentHasher.normalize(datetime.datetime(2019, 4, 3, 12, 34, 56, 500000))
+        assert datetime.datetime(
+            2019, 4, 3, 12, 34, 56, tzinfo=pytz.UTC
+        ) == ArgumentHasher.normalize(
+            datetime.datetime(2019, 4, 3, 12, 34, 56, tzinfo=pytz.UTC)
+        )
         normalized_list = cast(list, ArgumentHasher.normalize([1, 2, 3]))
         assert [1, 2, 3] == normalized_list
         in_dict = {"a": 1, "b": 2, "c": [1, 2, 3], "d": {"e": "f"}}
@@ -288,38 +353,56 @@ class TestReference:
         assert 42 == ArgumentHasher._encode(42)
         f = cast(float, ArgumentHasher._encode(123.45))
         assert pytest.approx(123.45) == f
-        assert {"_mementoType": "date", "iso8601": "2019-04-03"} == ArgumentHasher._encode(datetime.date(2019, 4, 3))
-        assert {"_mementoType": "datetime", "iso8601": "2019-04-03T12:34:56"} == \
-               ArgumentHasher._encode(datetime.datetime(2019, 4, 3, 12, 34, 56))
-        assert {"_mementoType": "datetime", "iso8601": "2019-04-03T12:34:56.500000"} == \
-               ArgumentHasher._encode(datetime.datetime(2019, 4, 3, 12, 34, 56, 500000))
-        assert {"_mementoType": "datetime", "iso8601": "2019-04-03T12:34:56+00:00"} == \
-               ArgumentHasher._encode(datetime.datetime(2019, 4, 3, 12, 34, 56, tzinfo=pytz.UTC))
+        assert {
+            "_mementoType": "date",
+            "iso8601": "2019-04-03",
+        } == ArgumentHasher._encode(datetime.date(2019, 4, 3))
+        assert {
+            "_mementoType": "datetime",
+            "iso8601": "2019-04-03T12:34:56",
+        } == ArgumentHasher._encode(datetime.datetime(2019, 4, 3, 12, 34, 56))
+        assert {
+            "_mementoType": "datetime",
+            "iso8601": "2019-04-03T12:34:56.500000",
+        } == ArgumentHasher._encode(datetime.datetime(2019, 4, 3, 12, 34, 56, 500000))
+        assert {
+            "_mementoType": "datetime",
+            "iso8601": "2019-04-03T12:34:56+00:00",
+        } == ArgumentHasher._encode(
+            datetime.datetime(2019, 4, 3, 12, 34, 56, tzinfo=pytz.UTC)
+        )
         encoded_list = cast(list, ArgumentHasher._encode([1, 2, 3]))
         assert [1, 2, 3] == encoded_list
         in_dict = {"a": 1, "b": 2, "c": [1, 2, 3], "d": {"e": "f"}}
         d = cast(dict, ArgumentHasher._encode(in_dict))
         assert in_dict == d
-        assert {"_mementoType": "FunctionReference",
-                "parameterNames": ["a"],
-                "qualifiedName": fn1.fn_reference().qualified_name,
-                "partialArgs": None,
-                "partialKwargs": {}} == ArgumentHasher._encode(fn1)
-        assert {"_mementoType": "FunctionReference",
-                "parameterNames": ["a"],
-                "qualifiedName": fn1.partial(a=7).fn_reference().qualified_name,
-                "partialArgs": None,
-                "partialKwargs": {"a": 7}} == ArgumentHasher._encode(fn1.partial(a=7))
+        assert {
+            "_mementoType": "FunctionReference",
+            "parameterNames": ["a"],
+            "qualifiedName": fn1.fn_reference().qualified_name,
+            "partialArgs": None,
+            "partialKwargs": {},
+        } == ArgumentHasher._encode(fn1)
+        assert {
+            "_mementoType": "FunctionReference",
+            "parameterNames": ["a"],
+            "qualifiedName": fn1.partial(a=7).fn_reference().qualified_name,
+            "partialArgs": None,
+            "partialKwargs": {"a": 7},
+        } == ArgumentHasher._encode(fn1.partial(a=7))
 
     def test_arg_hasher_normalized_json(self):
         assert "null" == ArgumentHasher._normalized_json(None)
-        assert "\"abc123\"" == ArgumentHasher._normalized_json("abc123")
+        assert '"abc123"' == ArgumentHasher._normalized_json("abc123")
         assert "42" == ArgumentHasher._normalized_json(42)
         assert "123.45" == ArgumentHasher._normalized_json(123.45)
         assert "true" == ArgumentHasher._normalized_json(True)
         assert "[1,2,3]" == ArgumentHasher._normalized_json([1, 2, 3])
         in_dict = {"c": [1, 2, 3], "a": 1, "d": {"e": "f"}, "b": 2}
-        assert '{"a":1,"b":2,"c":[1,2,3],"d":{"e":"f"}}' == ArgumentHasher._normalized_json(in_dict)
+        assert (
+            '{"a":1,"b":2,"c":[1,2,3],"d":{"e":"f"}}'
+            == ArgumentHasher._normalized_json(in_dict)
+        )
 
     # noinspection SpellCheckingInspection
     def test_arg_hasher_stability(self):
@@ -327,20 +410,35 @@ class TestReference:
         Ensure arg hasher is stable from release to release.
 
         """
-        assert "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a" == ArgumentHasher.compute_hash({})
-        assert "4cc66ba3de661a1a9319c150542555d384af8d81724a3b64dab2001d85df06df" == \
-               ArgumentHasher.compute_hash({"a": 42})
-        assert "d091f9c83c091f79652fe8786375b3fe4ce0861a56f5bfbafedbe431877ff0e8" == \
-               ArgumentHasher.compute_hash({"a": None})
-        assert "f7f851f4ba8ef23c0a3f2c20548bcc4bac24c46bc1c2c9332f7be4a695f22275" == \
-               ArgumentHasher.compute_hash({"a": 123.45})
-        assert "70621113b1eb7b8fbec0b1cb896e5f6adb32a9dbe08b5032c5edef18fca6002c" == \
-               ArgumentHasher.compute_hash({"a": "abc123"})
-        assert "730bc329ebcd24c6c9663ca4bb0e199a090dbf9d9d1058651d8560236abb1095" == \
-               ArgumentHasher.compute_hash({"a": [1, 2, 3]})
+        assert (
+            "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+            == ArgumentHasher.compute_hash({})
+        )
+        assert (
+            "4cc66ba3de661a1a9319c150542555d384af8d81724a3b64dab2001d85df06df"
+            == ArgumentHasher.compute_hash({"a": 42})
+        )
+        assert (
+            "d091f9c83c091f79652fe8786375b3fe4ce0861a56f5bfbafedbe431877ff0e8"
+            == ArgumentHasher.compute_hash({"a": None})
+        )
+        assert (
+            "f7f851f4ba8ef23c0a3f2c20548bcc4bac24c46bc1c2c9332f7be4a695f22275"
+            == ArgumentHasher.compute_hash({"a": 123.45})
+        )
+        assert (
+            "70621113b1eb7b8fbec0b1cb896e5f6adb32a9dbe08b5032c5edef18fca6002c"
+            == ArgumentHasher.compute_hash({"a": "abc123"})
+        )
+        assert (
+            "730bc329ebcd24c6c9663ca4bb0e199a090dbf9d9d1058651d8560236abb1095"
+            == ArgumentHasher.compute_hash({"a": [1, 2, 3]})
+        )
         in_dict = {"c": [1, 2, 3], "a": 1, "d": {"e": "f"}, "b": 2}
-        assert "52ea3bee36356ba2a31ff7931c95d69aee13f8f3d24727aa4fd9d456885ea00f" == \
-               ArgumentHasher.compute_hash({"a": in_dict})
+        assert (
+            "52ea3bee36356ba2a31ff7931c95d69aee13f8f3d24727aa4fd9d456885ea00f"
+            == ArgumentHasher.compute_hash({"a": in_dict})
+        )
 
     def test_pickling(self):
         assert fn1 == loads(dumps(fn1.fn_reference())).memento_fn
@@ -355,14 +453,18 @@ class TestReference:
 
         orig_test_dep_nonexistent = _test_dep_nonexistent
         try:
-            _test_dep_depends_on_nonexistent.required_dependencies.add("_test_dep_nonexistent")
+            _test_dep_depends_on_nonexistent.required_dependencies.add(
+                "_test_dep_nonexistent"
+            )
             del globals()["_test_dep_nonexistent"]
             MementoFunction.increment_global_fn_generation()
             with pytest.raises(DependencyNotFoundError):
                 _test_dep_depends_on_nonexistent()
         finally:
             globals()["_test_dep_nonexistent"] = orig_test_dep_nonexistent
-            _test_dep_depends_on_nonexistent.required_dependencies.remove("_test_dep_nonexistent")
+            _test_dep_depends_on_nonexistent.required_dependencies.remove(
+                "_test_dep_nonexistent"
+            )
 
     def test_detected_dependencies_do_not_fail_if_not_present(self):
         """Test that detected dependencies do not cause evaluation to fail if not found."""
@@ -410,10 +512,18 @@ class TestReference:
 
         assert 42 == _test_dep_circular_1()
         assert 42 == _test_dep_circular_2()
-        assert {_test_dep_circular_2} == _test_dep_circular_1.dependencies().transitive_memento_fn_dependencies()
-        assert {_test_dep_circular_2} == _test_dep_circular_1.dependencies().direct_memento_fn_dependencies()
-        assert {_test_dep_circular_1} == _test_dep_circular_2.dependencies().transitive_memento_fn_dependencies()
-        assert {_test_dep_circular_1} == _test_dep_circular_2.dependencies().transitive_memento_fn_dependencies()
+        assert {
+            _test_dep_circular_2
+        } == _test_dep_circular_1.dependencies().transitive_memento_fn_dependencies()
+        assert {
+            _test_dep_circular_2
+        } == _test_dep_circular_1.dependencies().direct_memento_fn_dependencies()
+        assert {
+            _test_dep_circular_1
+        } == _test_dep_circular_2.dependencies().transitive_memento_fn_dependencies()
+        assert {
+            _test_dep_circular_1
+        } == _test_dep_circular_2.dependencies().transitive_memento_fn_dependencies()
 
         # Test the version numbers are stable if there are circular dependencies
         v1a = _test_dep_circular_1.version()
@@ -456,12 +566,17 @@ class TestReference:
 
     def test_static_method_dependencies(self):
         assert 42 == self._static_method_test()
-        assert {_test_dep_a, _test_dep_c} == self._static_method_test.dependencies().\
-            transitive_memento_fn_dependencies()
+        assert {
+            _test_dep_a,
+            _test_dep_c,
+        } == self._static_method_test.dependencies().transitive_memento_fn_dependencies()
 
     def test_qualified_name_without_version(self):
         ref1 = FunctionReference(_test_method_2, cluster_name="cluster1")
-        assert "cluster1::tests.test_reference:_test_method_2" == ref1.qualified_name_without_version
+        assert (
+            "cluster1::tests.test_reference:_test_method_2"
+            == ref1.qualified_name_without_version
+        )
 
     def test_parameter_names(self):
         fn_ref = _test_method_2.fn_reference()
@@ -484,19 +599,20 @@ class TestReference:
 
         # Unknown module
         ref1 = FunctionReference.from_qualified_name(
-            "unknown_cluster::unknown.module:fn1#" + v, parameter_names=["x", "y"])
+            "unknown_cluster::unknown.module:fn1#" + v, parameter_names=["x", "y"]
+        )
         assert ref1.external
 
         # Unknown function
         ref2 = FunctionReference.from_qualified_name(
-            "unknown_cluster::tests.test_reference:fn1a#" + v,
-            parameter_names=["a"])
+            "unknown_cluster::tests.test_reference:fn1a#" + v, parameter_names=["a"]
+        )
         assert ref2.external
 
         # Known function
         print(fn1.__module__)
         print(fn1.fn_reference())
         ref3 = FunctionReference.from_qualified_name(
-            "unknown_cluster::tests.test_reference:fn1#" + v,
-            parameter_names=["a"])
+            "unknown_cluster::tests.test_reference:fn1#" + v, parameter_names=["a"]
+        )
         assert not ref3.external, str(fn1.fn_reference()) + " " + str(fn1.__module__)
