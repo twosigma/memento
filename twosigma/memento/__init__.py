@@ -67,8 +67,9 @@ def _load_plugins():
     """
     Dynamically load plugins by importing their modules.
     """
-    for entry_point in entry_points(group="twosigma.memento.plugin"):
-        importlib.import_module(entry_point.name)
+    for entry_point in entry_points():
+        if "group" in entry_point and entry_point.group == "twosigma.memento.plugin":
+            importlib.import_module(entry_point.name)
 
 
 _load_plugins()
