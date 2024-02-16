@@ -39,6 +39,9 @@ Documentation = "https://github.com/twosigma/memento#readme"
 Issues = "https://github.com/twosigma/memento/issues"
 Source = "https://github.com/twosigma/memento"
 
+[tool.hatch.build.targets.wheel]
+packages = ["twosigma/memento"]
+
 [tool.hatch.version]
 path = "twosigma/memento/__about__.py"
 
