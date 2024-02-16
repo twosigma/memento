@@ -53,8 +53,9 @@ class ResourceFunction:
         return handle
 
 
-def resource_function(resource_type: str) -> \
-        Callable[[Callable[[str], ResourceHandle]], ResourceFunction]:
+def resource_function(
+    resource_type: str,
+) -> Callable[[Callable[[str], ResourceHandle]], ResourceFunction]:
     """
     Decorator that causes a function to be treated as a Memento resource function.
     A resource function is a special type of function in Memento that represents a

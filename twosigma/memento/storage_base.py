@@ -34,11 +34,18 @@ from .exception import MementoException
 from .logging import log
 from .metadata import Memento, ResultType
 from .partition import Partition, InMemoryPartition
-from .reference import FunctionReference, FunctionReferenceWithArgHash, \
-    FunctionReferenceWithArguments
+from .reference import (
+    FunctionReference,
+    FunctionReferenceWithArgHash,
+    FunctionReferenceWithArguments,
+)
 from .serialization import MementoCodec
-from .types import FunctionNotFoundError, VersionedDataSourceKey, DataSourceKey,\
-    ContentAddressableHash
+from .types import (
+    FunctionNotFoundError,
+    VersionedDataSourceKey,
+    DataSourceKey,
+    ContentAddressableHash,
+)
 
 # The set of known codecs. Register new codecs using Codec.register.
 _registered_codecs = {}
@@ -65,12 +72,13 @@ _extension_for_result_type = {
     ResultType.index: "pickle",
     ResultType.series: "pickle",
     ResultType.data_frame: "pickle",
-    ResultType.partition: "partition"
+    ResultType.partition: "partition",
 }  # type: Dict[ResultType, str]
 
 
-_ResultTypeAndContentKey = namedtuple("_ResultTypeAndContentKey",
-                                      ["result_type", "content_key", "from_parent"])
+_ResultTypeAndContentKey = namedtuple(
+    "_ResultTypeAndContentKey", ["result_type", "content_key", "from_parent"]
+)
 
 
 class DataSource(ABC):
@@ -123,7 +131,9 @@ class DataSource(ABC):
         pass
 
     @abstractmethod
-    def input_metadata(self, content_key: VersionedDataSourceKey, metadata_key: str) -> BytesIO:
+    def input_metadata(
+        self, content_key: VersionedDataSourceKey, metadata_key: str
+    ) -> BytesIO:
         """
         Return a binary file-like object that reads data for the given metadata key
         for a given content key. This is for metadata that is stored in the object store
@@ -150,9 +160,12 @@ class DataSource(ABC):
         pass
 
     @abstractmethod
-    def reference(self, src_data_source: "DataSource",
-                  src_key: VersionedDataSourceKey,
-                  target_key: VersionedDataSourceKey) -> VersionedDataSourceKey:
+    def reference(
+        self,
+        src_data_source: "DataSource",
+        src_key: VersionedDataSourceKey,
+        target_key: VersionedDataSourceKey,
+    ) -> VersionedDataSourceKey:
         """
         Mark a reference to the given data source key coming from the given data source.
         This is a NOP for data sources that do not perform reference counting for garbage
@@ -161,8 +174,9 @@ class DataSource(ABC):
         pass
 
     @abstractmethod
-    def output_metadata(self, content_key: VersionedDataSourceKey, metadata_key: str,
-                        value: bytes):
+    def output_metadata(
+        self, content_key: VersionedDataSourceKey, metadata_key: str, value: bytes
+    ):
         """
         Store data for the given metadata key for a given content key. This is for metadata
         that is stored in the object store alongside the object.
@@ -233,9 +247,14 @@ class DataSource(ABC):
         pass
 
     @abstractmethod
-    def list_keys_nonversioned(self, directory: DataSourceKey, file_prefix: str = "",
-                               recursive: bool = False, limit: int = None,
-                               endswith: str = None) -> Iterable[DataSourceKey]:
+    def list_keys_nonversioned(
+        self,
+        directory: DataSourceKey,
+        file_prefix: str = "",
+        recursive: bool = False,
+        limit: int = None,
+        endswith: str = None,
+    ) -> Iterable[DataSourceKey]:
         """
         List the keys in the path provided by the 'prefix' parameter.
 
@@ -281,18 +300,22 @@ class Codec(ABC):
             pass
 
         @staticmethod
-        def make_url_for_key(data_source: DataSource, key: VersionedDataSourceKey) -> str:
+        def make_url_for_key(
+            data_source: DataSource, key: VersionedDataSourceKey
+        ) -> str:
             return data_source.make_url_for_key(key)
 
         @abstractmethod
-        def store(self, data_source: DataSource, key_override: str, obj: object) -> \
-                VersionedDataSourceKey:
+        def store(
+            self, data_source: DataSource, key_override: str, obj: object
+        ) -> VersionedDataSourceKey:
             """Store the object to the store and return the key under which the data was stored"""
             pass
 
         @staticmethod
-        def output_key_for_content_key(content_key: ContentAddressableHash) -> \
-                DataSourceKey:
+        def output_key_for_content_key(
+            content_key: ContentAddressableHash,
+        ) -> DataSourceKey:
             """Converts a content key to the key at which it should be stored"""
             return DataSourceKey("c/{}".format(content_key.key))
 
@@ -315,8 +338,9 @@ class Codec(ABC):
         def __init__(self):
             super().__init__()
 
-        def store(self, data_source: DataSource, key_override: str, obj: object) -> \
-                Optional[VersionedDataSourceKey]:
+        def store(
+            self, data_source: DataSource, key_override: str, obj: object
+        ) -> Optional[VersionedDataSourceKey]:
             if key_override:
                 key = self.output_key_for_override_key(key_override)
                 data_source.delete_nonversioned_key(key)
@@ -339,8 +363,9 @@ class Codec(ABC):
         def __init__(self):
             super(Codec.BlobStrategy, self).__init__()
 
-        def store(self, data_source: DataSource, key_override: str, obj: object) -> \
-                VersionedDataSourceKey:
+        def store(
+            self, data_source: DataSource, key_override: str, obj: object
+        ) -> VersionedDataSourceKey:
             data = self.encode(obj)
             content_hash = hashlib.sha256(data).hexdigest()
             key = self.output_key_for_content_key(ContentAddressableHash(content_hash))
@@ -364,8 +389,12 @@ class Codec(ABC):
         self.config = config
         self._strategy = strategy
 
-    def load(self, result_type: ResultType, data_source: DataSource,
-             key: VersionedDataSourceKey) -> object:
+    def load(
+        self,
+        result_type: ResultType,
+        data_source: DataSource,
+        key: VersionedDataSourceKey,
+    ) -> object:
         """
         Loads a memento function result from the given data source
         and returns the result as a file-like object.
@@ -373,8 +402,12 @@ class Codec(ABC):
         """
         return self._strategy[result_type].load(data_source, key)
 
-    def make_url_for_result(self, result_type: ResultType, data_source: DataSource,
-                            key: VersionedDataSourceKey) -> str:
+    def make_url_for_result(
+        self,
+        result_type: ResultType,
+        data_source: DataSource,
+        key: VersionedDataSourceKey,
+    ) -> str:
         """
         Returns the url from which the memento function result from the given data source
         can be retrieved.
@@ -382,8 +415,13 @@ class Codec(ABC):
         """
         return self._strategy[result_type].make_url_for_key(data_source, key)
 
-    def store(self, result_type: ResultType, data_source: DataSource, key_override: Optional[str],
-              obj: object) -> VersionedDataSourceKey:
+    def store(
+        self,
+        result_type: ResultType,
+        data_source: DataSource,
+        key_override: Optional[str],
+        obj: object,
+    ) -> VersionedDataSourceKey:
         """
         Encode and store the memento function result in the provided object to the datastore,
         returning the key under which the data was stored.
@@ -433,29 +471,32 @@ class DefaultCodec(Codec):
     """
 
     def __init__(self, config):
-        super().__init__(config, {
-            ResultType.exception: self.JsonExceptionStrategy(),
-            ResultType.null: self.NullStrategy(),
-            ResultType.boolean: self.ValuePickleStrategy(),
-            ResultType.string: self.ValuePickleStrategy(),
-            ResultType.binary: self.ValuePickleStrategy(),
-            ResultType.number: self.ValuePickleStrategy(),
-            ResultType.date: self.ValuePickleStrategy(),
-            ResultType.timestamp: self.ValuePickleStrategy(),
-            ResultType.list_result: self.ValuePickleStrategy(),
-            ResultType.dictionary: self.ValuePickleStrategy(),
-            ResultType.array_boolean: self.ValuePickleStrategy(),
-            ResultType.array_int8: self.ValuePickleStrategy(),
-            ResultType.array_int16: self.ValuePickleStrategy(),
-            ResultType.array_int32: self.ValuePickleStrategy(),
-            ResultType.array_int64: self.ValuePickleStrategy(),
-            ResultType.array_float32: self.ValuePickleStrategy(),
-            ResultType.array_float64: self.ValuePickleStrategy(),
-            ResultType.index: self.ValuePickleStrategy(),
-            ResultType.series: self.ValuePickleStrategy(),
-            ResultType.data_frame: self.ValuePickleStrategy(),
-            ResultType.partition: self.PicklePartitionStrategy(self)
-        })
+        super().__init__(
+            config,
+            {
+                ResultType.exception: self.JsonExceptionStrategy(),
+                ResultType.null: self.NullStrategy(),
+                ResultType.boolean: self.ValuePickleStrategy(),
+                ResultType.string: self.ValuePickleStrategy(),
+                ResultType.binary: self.ValuePickleStrategy(),
+                ResultType.number: self.ValuePickleStrategy(),
+                ResultType.date: self.ValuePickleStrategy(),
+                ResultType.timestamp: self.ValuePickleStrategy(),
+                ResultType.list_result: self.ValuePickleStrategy(),
+                ResultType.dictionary: self.ValuePickleStrategy(),
+                ResultType.array_boolean: self.ValuePickleStrategy(),
+                ResultType.array_int8: self.ValuePickleStrategy(),
+                ResultType.array_int16: self.ValuePickleStrategy(),
+                ResultType.array_int32: self.ValuePickleStrategy(),
+                ResultType.array_int64: self.ValuePickleStrategy(),
+                ResultType.array_float32: self.ValuePickleStrategy(),
+                ResultType.array_float64: self.ValuePickleStrategy(),
+                ResultType.index: self.ValuePickleStrategy(),
+                ResultType.series: self.ValuePickleStrategy(),
+                ResultType.data_frame: self.ValuePickleStrategy(),
+                ResultType.partition: self.PicklePartitionStrategy(self),
+            },
+        )
 
     class JsonExceptionStrategy(Codec.BlobStrategy):
         """JSON encoding, returning as a MementoException"""
@@ -463,19 +504,25 @@ class DefaultCodec(Codec):
         def __init__(self):
             super().__init__()
 
-        def load(self, data_source: DataSource, key: VersionedDataSourceKey) -> MementoException:
+        def load(
+            self, data_source: DataSource, key: VersionedDataSourceKey
+        ) -> MementoException:
             with data_source.input_versioned(key) as f:
                 with io.TextIOWrapper(f, encoding="utf-8") as t:
                     result_dict = json.load(t)
-            return MementoException(result_dict["exception_name"], result_dict["message"],
-                                    result_dict["stack_trace"])
+            return MementoException(
+                result_dict["exception_name"],
+                result_dict["message"],
+                result_dict["stack_trace"],
+            )
 
         def encode(self, obj: MementoException) -> bytes:
             store_dict = {
                 "exception_name": obj.exception_name,
                 "message": obj.message,
                 "stack_trace": "".join(
-                    traceback.format_exception(type(obj), obj, obj.__traceback__))
+                    traceback.format_exception(type(obj), obj, obj.__traceback__)
+                ),
             }
             return json.dumps(store_dict).encode("utf-8")
 
@@ -494,8 +541,12 @@ class DefaultCodec(Codec):
         _index = None  # type: Dict[str, _ResultTypeAndContentKey]
         """"""
 
-        def __init__(self,
-                     codec: Codec, data_source: DataSource, base_key: VersionedDataSourceKey):
+        def __init__(
+            self,
+            codec: Codec,
+            data_source: DataSource,
+            base_key: VersionedDataSourceKey,
+        ):
             super().__init__()
             self._codec = codec
             self._data_source = data_source
@@ -509,8 +560,10 @@ class DefaultCodec(Codec):
             return {
                 k: _ResultTypeAndContentKey(
                     result_type=ResultType[v["result_type"]],
-                    content_key=MementoCodec.decode_versioned_data_source_key(v["content_key"]),
-                    from_parent=v.get("from_parent", False)
+                    content_key=MementoCodec.decode_versioned_data_source_key(
+                        v["content_key"]
+                    ),
+                    from_parent=v.get("from_parent", False),
                 )
                 for (k, v) in d.items()
             }
@@ -520,8 +573,10 @@ class DefaultCodec(Codec):
             d = {
                 k: {
                     "result_type": v.result_type.name,
-                    "content_key": MementoCodec.encode_versioned_data_source_key(v.content_key),
-                    "from_parent": v.from_parent
+                    "content_key": MementoCodec.encode_versioned_data_source_key(
+                        v.content_key
+                    ),
+                    "from_parent": v.from_parent,
                 }
                 for (k, v) in index.items()
             }
@@ -529,16 +584,23 @@ class DefaultCodec(Codec):
 
         def get(self, key: str) -> object:
             if key not in self._index:
-                raise ValueError("Key '{}' is not in key list for partition".format(key))
+                raise ValueError(
+                    "Key '{}' is not in key list for partition".format(key)
+                )
             index_entry = self._index[key]
-            return self._codec.load(index_entry.result_type, self._data_source,
-                                    index_entry.content_key)
+            return self._codec.load(
+                index_entry.result_type, self._data_source, index_entry.content_key
+            )
 
         def list_keys(self, _include_merge_parent: bool = True) -> Iterable[str]:
             if _include_merge_parent:
                 keys = self._index.keys()
             else:
-                keys = [key for key in self._index.keys() if not self._index.get(key).from_parent]
+                keys = [
+                    key
+                    for key in self._index.keys()
+                    if not self._index.get(key).from_parent
+                ]
             return sorted(keys)
 
     class PicklePartitionStrategy(Codec.BlobStrategy):
@@ -556,11 +618,14 @@ class DefaultCodec(Codec):
             super().__init__()
             self._codec = codec
 
-        def load(self, data_source: DataSource, key: VersionedDataSourceKey) -> Partition:
+        def load(
+            self, data_source: DataSource, key: VersionedDataSourceKey
+        ) -> Partition:
             return DefaultCodec.PicklePartition(self._codec, data_source, key)
 
-        def store(self, data_source: DataSource, key_override: str, obj: Partition) -> \
-                VersionedDataSourceKey:
+        def store(
+            self, data_source: DataSource, key_override: str, obj: Partition
+        ) -> VersionedDataSourceKey:
             # build a dict of key to result type
             index = dict()  # type: Dict[str, _ResultTypeAndContentKey]
 
@@ -569,28 +634,37 @@ class DefaultCodec(Codec):
             merge_parent = obj._merge_parent
             if merge_parent:
                 if isinstance(merge_parent, DefaultCodec.PicklePartition):
-                    pickle_partition_parent = cast(DefaultCodec.PicklePartition, merge_parent)
+                    pickle_partition_parent = cast(
+                        DefaultCodec.PicklePartition, merge_parent
+                    )
                     # noinspection PyProtectedMember
                     parent_index = pickle_partition_parent._index
                     # noinspection PyProtectedMember
                     parent_data_source = pickle_partition_parent._data_source
-                elif hasattr(merge_parent, "_output_keys") \
-                        and hasattr(merge_parent, "_data_source"):
+                elif hasattr(merge_parent, "_output_keys") and hasattr(
+                    merge_parent, "_data_source"
+                ):
                     # noinspection PyProtectedMember
                     parent_index = merge_parent._output_keys
                     # noinspection PyProtectedMember
                     parent_data_source = merge_parent._data_source
                 else:
-                    raise IOError("Could not merge partitions: parent is not "
-                                  "a PicklePartition or has never been serialized")
+                    raise IOError(
+                        "Could not merge partitions: parent is not "
+                        "a PicklePartition or has never been serialized"
+                    )
                 for k, v in parent_index.items():
                     # Mark a reference to all values that come from parents. This is for storage
                     # backends that do reference counting.
-                    data_source.reference(parent_data_source, v.content_key, v.content_key)
+                    data_source.reference(
+                        parent_data_source, v.content_key, v.content_key
+                    )
 
-                    index[k] = _ResultTypeAndContentKey(result_type=v.result_type,
-                                                        content_key=v.content_key,
-                                                        from_parent=True)
+                    index[k] = _ResultTypeAndContentKey(
+                        result_type=v.result_type,
+                        content_key=v.content_key,
+                        from_parent=True,
+                    )
 
             # Layer current keys on top of parent's keys
             output_keys = dict()
@@ -600,15 +674,21 @@ class DefaultCodec(Codec):
                 result_type = ResultType.from_object(result)
 
                 # Store
-                content_key_override = "{}/{}".format(key_override, k)\
-                    if key_override is not None else None
-                partition_content_key = self._codec.store(result_type, data_source,
-                                                          content_key_override, result)
+                content_key_override = (
+                    "{}/{}".format(key_override, k)
+                    if key_override is not None
+                    else None
+                )
+                partition_content_key = self._codec.store(
+                    result_type, data_source, content_key_override, result
+                )
 
                 # Update map of key to result info
-                index_entry = _ResultTypeAndContentKey(result_type=result_type,
-                                                       content_key=partition_content_key,
-                                                       from_parent=False)
+                index_entry = _ResultTypeAndContentKey(
+                    result_type=result_type,
+                    content_key=partition_content_key,
+                    from_parent=False,
+                )
                 output_keys[k] = index_entry
                 index[k] = index_entry
 
@@ -621,10 +701,14 @@ class DefaultCodec(Codec):
             # noinspection PyProtectedMember
             obj._index_bytes = DefaultCodec.PicklePartition._serialize_index(index)
 
-            index_key_override = "{}/index.json".format(key_override) \
-                if key_override is not None else None
-            return super().store(data_source=data_source,
-                                 key_override=index_key_override, obj=obj)
+            index_key_override = (
+                "{}/index.json".format(key_override)
+                if key_override is not None
+                else None
+            )
+            return super().store(
+                data_source=data_source, key_override=index_key_override, obj=obj
+            )
 
         def encode(self, obj: Partition) -> bytes:
             # noinspection PyProtectedMember
@@ -651,6 +735,7 @@ class ResultIsWithData:
     """
     Marker class to indicate that metadata is stored with the data.
     """
+
     pass
 
 
@@ -665,7 +750,9 @@ class MetadataSource(ABC):
         pass
 
     @abstractmethod
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         """
         See StorageBackend.get_mementos()
 
@@ -690,7 +777,9 @@ class MetadataSource(ABC):
         pass
 
     @abstractmethod
-    def list_mementos(self, fn: FunctionReference, limit: Optional[int]) -> List[Memento]:
+    def list_mementos(
+        self, fn: FunctionReference, limit: Optional[int]
+    ) -> List[Memento]:
         """
         List all mementos for the given function
 
@@ -709,8 +798,12 @@ class MetadataSource(ABC):
         pass
 
     @abstractmethod
-    def read_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash,
-                      key: str, retry_on_none=False) -> Optional[Union[bytes, ResultIsWithData]]:
+    def read_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        retry_on_none=False,
+    ) -> Optional[Union[bytes, ResultIsWithData]]:
         """
         Read metadata (e.g. logs) associated with the Memento for the provided `fn_with_arg_hash`.
 
@@ -729,8 +822,13 @@ class MetadataSource(ABC):
         pass
 
     @abstractmethod
-    def write_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash,
-                       key: str, value: bytes, stored_with_data: bool):
+    def write_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        value: bytes,
+        stored_with_data: bool,
+    ):
         """
         Write metadata (e.g. logs) associated with the Memento for the given `fn_with_arg_hash`
 
@@ -779,41 +877,65 @@ class DataSourceMetadataSource(MetadataSource):
 
     @staticmethod
     def _get_function_path(fn_reference: FunctionReference) -> DataSourceKey:
-        return DataSourceKey("{}/{}".format(DataSourceMetadataSource._function_path_prefix.key,
-                                            fn_reference.qualified_name))
+        return DataSourceKey(
+            "{}/{}".format(
+                DataSourceMetadataSource._function_path_prefix.key,
+                fn_reference.qualified_name,
+            )
+        )
 
     @staticmethod
     def _get_path(fn_reference: FunctionReference, arg_hash: str) -> str:
-        return "{}/{}".format(DataSourceMetadataSource._get_function_path(fn_reference).key,
-                              arg_hash)
+        return "{}/{}".format(
+            DataSourceMetadataSource._get_function_path(fn_reference).key, arg_hash
+        )
 
     @staticmethod
-    def _get_metadata_path(fn_with_arg_hash: FunctionReferenceWithArgHash) -> DataSourceKey:
-        return DataSourceKey("{}.memento.json".format(DataSourceMetadataSource._get_path(
-            fn_with_arg_hash.fn_reference, fn_with_arg_hash.arg_hash)))
-
-    @staticmethod
-    def _get_metadata_key(fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                          stored_with_data: bool) -> DataSourceKey:
+    def _get_metadata_path(
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+    ) -> DataSourceKey:
         return DataSourceKey(
-            "{}.metadata.{}{}".format(DataSourceMetadataSource._get_path(
-                fn_with_arg_hash.fn_reference, fn_with_arg_hash.arg_hash), key,
-                ".with_data" if stored_with_data else ""))
+            "{}.memento.json".format(
+                DataSourceMetadataSource._get_path(
+                    fn_with_arg_hash.fn_reference, fn_with_arg_hash.arg_hash
+                )
+            )
+        )
+
+    @staticmethod
+    def _get_metadata_key(
+        fn_with_arg_hash: FunctionReferenceWithArgHash, key: str, stored_with_data: bool
+    ) -> DataSourceKey:
+        return DataSourceKey(
+            "{}.metadata.{}{}".format(
+                DataSourceMetadataSource._get_path(
+                    fn_with_arg_hash.fn_reference, fn_with_arg_hash.arg_hash
+                ),
+                key,
+                ".with_data" if stored_with_data else "",
+            )
+        )
 
     def _read_memento(self, path: DataSourceKey) -> Memento:
         with self.data_source.input_nonversioned(path) as f:
             with TextIOWrapper(f, encoding="utf-8") as t:
                 return MementoCodec.decode_memento(json.load(t))
 
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         results = []
         for fn_ref_with_arg_hash in fns:
-            metadata_path = DataSourceMetadataSource._get_metadata_path(fn_ref_with_arg_hash)
+            metadata_path = DataSourceMetadataSource._get_metadata_path(
+                fn_ref_with_arg_hash
+            )
             try:
                 memento = self._read_memento(metadata_path)
             except FunctionNotFoundError as e:
-                log.debug("Ignoring memoized result: while decoding Memento for {}, "
-                          "could not find function: {}".format(fn_ref_with_arg_hash, e))
+                log.debug(
+                    "Ignoring memoized result: while decoding Memento for {}, "
+                    "could not find function: {}".format(fn_ref_with_arg_hash, e)
+                )
                 memento = None
             except IOError:
                 memento = None
@@ -828,32 +950,48 @@ class DataSourceMetadataSource(MetadataSource):
         fpp = DataSourceMetadataSource._function_path_prefix
         return [
             FunctionReference.from_qualified_name(
-                x.key[len(DataSourceMetadataSource._function_path_prefix) + 1:]) for
-            x in self.data_source.list_keys_nonversioned(directory=fpp, file_prefix="",
-                                                         recursive=False)
+                x.key[len(DataSourceMetadataSource._function_path_prefix) + 1 :]
+            )
+            for x in self.data_source.list_keys_nonversioned(
+                directory=fpp, file_prefix="", recursive=False
+            )
         ]
 
-    def list_mementos(self, fn: FunctionReference, limit: Optional[int]) -> List[Memento]:
+    def list_mementos(
+        self, fn: FunctionReference, limit: Optional[int]
+    ) -> List[Memento]:
         path = DataSourceMetadataSource._get_function_path(fn)
         result = []
-        for key in self.data_source.list_keys_nonversioned(directory=path, file_prefix="",
-                                                           recursive=False, limit=limit,
-                                                           endswith=".memento.json"):
+        for key in self.data_source.list_keys_nonversioned(
+            directory=path,
+            file_prefix="",
+            recursive=False,
+            limit=limit,
+            endswith=".memento.json",
+        ):
             result.append(self._read_memento(key))
         return result
 
     def put_memento(self, memento: Memento):
         metadata_path = DataSourceMetadataSource._get_metadata_path(
-            memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash())
+            memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash()
+        )
         log.debug("Writing metadata to {}...".format(metadata_path))
         memento_json = json.dumps(MementoCodec.encode_memento(memento))
         self.data_source.output(metadata_path, io.BytesIO(memento_json.encode("utf-8")))
 
-    def read_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash,
-                      key: str, retry_on_none=False) -> Optional[Union[bytes, ResultIsWithData]]:
-        metadata_key = DataSourceMetadataSource._get_metadata_key(fn_with_arg_hash, key, False)
-        metadata_key_with_data =\
-            DataSourceMetadataSource._get_metadata_key(fn_with_arg_hash, key, True)
+    def read_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        retry_on_none=False,
+    ) -> Optional[Union[bytes, ResultIsWithData]]:
+        metadata_key = DataSourceMetadataSource._get_metadata_key(
+            fn_with_arg_hash, key, False
+        )
+        metadata_key_with_data = DataSourceMetadataSource._get_metadata_key(
+            fn_with_arg_hash, key, True
+        )
 
         def data_source_exists():
             retries = 3 if retry_on_none else 1
@@ -876,20 +1014,30 @@ class DataSourceMetadataSource(MetadataSource):
         else:
             return None
 
-    def write_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash,
-                       key: str, value: bytes, stored_with_data: bool):
-        metadata_key = DataSourceMetadataSource._get_metadata_key(fn_with_arg_hash, key,
-                                                                  stored_with_data)
+    def write_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        value: bytes,
+        stored_with_data: bool,
+    ):
+        metadata_key = DataSourceMetadataSource._get_metadata_key(
+            fn_with_arg_hash, key, stored_with_data
+        )
         log.debug("Writing metadata to key {}...".format(metadata_key))
-        self.data_source.output(metadata_key, io.BytesIO(bytes() if stored_with_data else value))
+        self.data_source.output(
+            metadata_key, io.BytesIO(bytes() if stored_with_data else value)
+        )
 
     def forget_call(self, fn_with_arg_hash: FunctionReferenceWithArgHash):
-        call_path_prefix = DataSourceMetadataSource._get_path(fn_with_arg_hash.fn_reference,
-                                                              fn_with_arg_hash.arg_hash)
+        call_path_prefix = DataSourceMetadataSource._get_path(
+            fn_with_arg_hash.fn_reference, fn_with_arg_hash.arg_hash
+        )
         for key in self.data_source.list_keys_nonversioned(
-                directory=DataSourceKey(os.path.dirname(call_path_prefix)),
-                file_prefix=os.path.basename(call_path_prefix),
-                recursive=False):
+            directory=DataSourceKey(os.path.dirname(call_path_prefix)),
+            file_prefix=os.path.basename(call_path_prefix),
+            recursive=False,
+        ):
             self.data_source.delete_all_versions(key, False)
 
     def forget_everything(self):
@@ -904,6 +1052,7 @@ class _CacheEntry:
     """
     Each entry stores a memento and, optionally, a value. Note that `None` is a valid value.
     """
+
     obj_size = None  # type: int
     memento = None  # type: Memento
     value = None  # type: object
@@ -921,6 +1070,7 @@ class MemoryCache:
     Write-through memory cache for memoized data
 
     """
+
     memory_cache_bytes = None  # type: int
     memory_usage = None  # type: int
     lru_deque = None  # type: deque
@@ -943,7 +1093,9 @@ class MemoryCache:
         raise TypeError("Can't compute the memory usage for type {}".format(type(obj)))
 
     @staticmethod
-    def _pd_linreg_mem_usage(obj: Union[pd.DataFrame, pd.Series], sample_size: int = 100) -> int:
+    def _pd_linreg_mem_usage(
+        obj: Union[pd.DataFrame, pd.Series], sample_size: int = 100
+    ) -> int:
         """
         A good estimate of memory usage for DataFrames and Series without taking too much time.
         Methodology splits the sample unevenly, deeply computes the memory usage of each split,
@@ -994,8 +1146,11 @@ class MemoryCache:
             result = 0
             if hasattr(obj, "__len__"):
                 length = len(obj)
-                result += length * MemoryCache._estimate_object_size(
-                    next(iter(obj))) if length > 0 else 0
+                result += (
+                    length * MemoryCache._estimate_object_size(next(iter(obj)))
+                    if length > 0
+                    else 0
+                )
             else:
                 i = obj  # type: Iterable
                 result += sum([MemoryCache._estimate_object_size(x) for x in i])
@@ -1006,7 +1161,8 @@ class MemoryCache:
     def _cache_key_for_memento(memento: Memento) -> str:
         return MemoryCache._cache_key_for_fn(
             memento.invocation_metadata.fn_reference_with_args.fn_reference,
-            memento.invocation_metadata.fn_reference_with_args.arg_hash)
+            memento.invocation_metadata.fn_reference_with_args.arg_hash,
+        )
 
     @staticmethod
     def _cache_key_for_fn(fn_ref: FunctionReference, arg_hash: str) -> str:
@@ -1028,7 +1184,9 @@ class MemoryCache:
         if cache_key in self.lru_deque:
             self.lru_deque.remove(cache_key)
 
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         result = []
         for fn in fns:
             cache_key = self._cache_key_for_fn(fn.fn_reference, fn.arg_hash)
@@ -1091,7 +1249,10 @@ class MemoryCache:
         self._evict(cache_key)
 
         # Free up memory in the cache (if needed) by discarding LRU
-        while len(self.lru_deque) > 0 and self.memory_usage + obj_size > self.memory_cache_bytes:
+        while (
+            len(self.lru_deque) > 0
+            and self.memory_usage + obj_size > self.memory_cache_bytes
+        ):
             self._evict(self.lru_deque.popleft())
 
         # Add to cache
@@ -1101,8 +1262,9 @@ class MemoryCache:
         self.memory_usage += obj_size
 
     def forget_call(self, fn_with_arg_hash: FunctionReferenceWithArgHash):
-        cache_key = self._cache_key_for_fn(fn_with_arg_hash.fn_reference,
-                                           fn_with_arg_hash.arg_hash)
+        cache_key = self._cache_key_for_fn(
+            fn_with_arg_hash.fn_reference, fn_with_arg_hash.arg_hash
+        )
         self.refs.pop(cache_key, None)
         self._evict(cache_key)
 
@@ -1117,10 +1279,14 @@ class MemoryCache:
         qualified_name_slash = qualified_name + "/"
         # This is O(n) but should be a rare operation and spares us the complexity of maintaining
         # a second map
-        ref_list = [key for key in self.refs.keys() if key.startswith(qualified_name_slash)]
+        ref_list = [
+            key for key in self.refs.keys() if key.startswith(qualified_name_slash)
+        ]
         for key in ref_list:
             del self.refs[key]
-        evict_list = [key for key in self.cache.keys() if key.startswith(qualified_name_slash)]
+        evict_list = [
+            key for key in self.cache.keys() if key.startswith(qualified_name_slash)
+        ]
         for key in evict_list:
             self._evict(key)
 
@@ -1140,8 +1306,15 @@ class StorageBackendBase(StorageBackend, ABC):
     _memory_cache = None  # type: MemoryCache
     codec = None  # type: Codec
 
-    def __init__(self, storage_type: str, data_source: DataSource, metadata_source: MetadataSource,
-                 memory_cache_mb: int = None, config: dict = None, read_only: bool = None):
+    def __init__(
+        self,
+        storage_type: str,
+        data_source: DataSource,
+        metadata_source: MetadataSource,
+        memory_cache_mb: int = None,
+        config: dict = None,
+        read_only: bool = None,
+    ):
         super().__init__(storage_type, config=config, read_only=read_only)
         self._data_source = data_source
         self._metadata_source = metadata_source
@@ -1157,10 +1330,15 @@ class StorageBackendBase(StorageBackend, ABC):
 
     @staticmethod
     def _get_path(fn_reference: FunctionReference, arg_hash: str) -> DataSourceKey:
-        return DataSourceKey("{}/{}".format(StorageBackendBase._get_function_path(
-            fn_reference), arg_hash))
+        return DataSourceKey(
+            "{}/{}".format(
+                StorageBackendBase._get_function_path(fn_reference), arg_hash
+            )
+        )
 
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         # First, consult cache
         if self._memory_cache:
             cache_result = self._memory_cache.get_mementos(fns)
@@ -1196,16 +1374,22 @@ class StorageBackendBase(StorageBackend, ABC):
                 # Fall back to storage
                 pass
 
-        result = self.codec.load(memento.invocation_metadata.result_type, self._data_source,
-                                 memento.content_key)
+        result = self.codec.load(
+            memento.invocation_metadata.result_type,
+            self._data_source,
+            memento.content_key,
+        )
         if self._memory_cache:
             self._memory_cache.put(memento, result, has_result=True)
 
         return result
 
     def make_url_for_result(self, memento: Memento) -> str:
-        return self.codec.make_url_for_result(memento.invocation_metadata.result_type,
-                                              self._data_source, memento.content_key)
+        return self.codec.make_url_for_result(
+            memento.invocation_metadata.result_type,
+            self._data_source,
+            memento.content_key,
+        )
 
     def is_memoized(self, fn_reference: FunctionReference, arg_hash: str) -> bool:
         if self._memory_cache:
@@ -1213,7 +1397,8 @@ class StorageBackendBase(StorageBackend, ABC):
                 return True
             # if not in memory cache, fall back to storage
         return self._metadata_source.all_mementos_exist(
-            [FunctionReferenceWithArgHash(fn_reference, arg_hash)])
+            [FunctionReferenceWithArgHash(fn_reference, arg_hash)]
+        )
 
     def is_all_memoized(self, fns: Iterable[FunctionReferenceWithArguments]) -> bool:
         if self._memory_cache:
@@ -1221,7 +1406,8 @@ class StorageBackendBase(StorageBackend, ABC):
                 return True
             # if not in memory cache, fall back to storage
         return self._metadata_source.all_mementos_exist(
-            [fn.fn_reference_with_arg_hash() for fn in fns])
+            [fn.fn_reference_with_arg_hash() for fn in fns]
+        )
 
     def list_functions(self) -> List[FunctionReference]:
         # Do not consult cache since it would not give us the full picture
@@ -1241,7 +1427,9 @@ class StorageBackendBase(StorageBackend, ABC):
 
         # Write data
         result_type = memento.invocation_metadata.result_type
-        content_key = self.codec.store(result_type, self._data_source, key_override, result)
+        content_key = self.codec.store(
+            result_type, self._data_source, key_override, result
+        )
         log.debug("Wrote data to {}".format(content_key))
         assert (result_type == ResultType.null) or (content_key is not None)
         memento.content_key = content_key
@@ -1249,33 +1437,46 @@ class StorageBackendBase(StorageBackend, ABC):
         # Write metadata
         self._metadata_source.put_memento(memento)
 
-    def read_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                      retry_on_none=False) -> bytes:
+    def read_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        retry_on_none=False,
+    ) -> bytes:
         # Metadata is not currently cached
-        result = self._metadata_source.read_metadata(fn_with_arg_hash, key,
-                                                     retry_on_none=retry_on_none)
+        result = self._metadata_source.read_metadata(
+            fn_with_arg_hash, key, retry_on_none=retry_on_none
+        )
         if isinstance(result, ResultIsWithData):
             # Metadata is stored alongside the data object
             memento = self.get_mementos([fn_with_arg_hash])[0]
             if memento is None:
-                raise IOError("Metadata shows metadata should exist with data, but could "
-                              "not retrieve Memento: {}".format(fn_with_arg_hash))
+                raise IOError(
+                    "Metadata shows metadata should exist with data, but could "
+                    "not retrieve Memento: {}".format(fn_with_arg_hash)
+                )
             result = self._data_source.input_metadata(memento.content_key, key)
 
         return result
 
-    def write_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash,
-                       key: str, value: bytes,
-                       store_with_content_key: Optional[VersionedDataSourceKey] = None):
+    def write_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        value: bytes,
+        store_with_content_key: Optional[VersionedDataSourceKey] = None,
+    ):
         assert fn_with_arg_hash is not None
         if not self.read_only:
             if store_with_content_key:
-                self._metadata_source.write_metadata(fn_with_arg_hash, key, bytes(),
-                                                     stored_with_data=True)
+                self._metadata_source.write_metadata(
+                    fn_with_arg_hash, key, bytes(), stored_with_data=True
+                )
                 self._data_source.output_metadata(store_with_content_key, key, value)
             else:
-                self._metadata_source.write_metadata(fn_with_arg_hash, key, value,
-                                                     stored_with_data=False)
+                self._metadata_source.write_metadata(
+                    fn_with_arg_hash, key, value, stored_with_data=False
+                )
         else:
             raise ValueError("Cannot write metadata to a read-only storage backend")
 

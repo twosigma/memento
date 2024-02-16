@@ -30,16 +30,18 @@ class NullRunnerBackend(RunnerBackend):
     def __init__(self, config: dict = None):
         super().__init__("null", config=config)
 
-    def batch_run(self, context: InvocationContext, storage_backend: StorageBackend,
-                  fn_reference_with_args: List[FunctionReferenceWithArguments],
-                  log_runner_backend: RunnerBackend,
-                  caller_memento: Optional[Memento]) -> List[Any]:
+    def batch_run(
+        self,
+        context: InvocationContext,
+        storage_backend: StorageBackend,
+        fn_reference_with_args: List[FunctionReferenceWithArguments],
+        log_runner_backend: RunnerBackend,
+        caller_memento: Optional[Memento],
+    ) -> List[Any]:
         raise RuntimeError("Null runner refusing to run functions")
 
     def to_dict(self):
-        config = {
-            "type": "null"
-        }
+        config = {"type": "null"}
         return config
 
 

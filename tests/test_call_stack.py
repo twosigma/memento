@@ -63,10 +63,16 @@ class TestCallStack:
         recursive_context = RecursiveContext()
         recursive_context.update("correlation_id", corr_id)
         call_stack = CallStack.get()
-        frame1 = StackFrame(fn_sample_1.fn_reference().with_args(),
-                            Environment.get().default_cluster.runner, recursive_context)
-        frame2 = StackFrame(fn_sample_1.fn_reference().with_args(),
-                            Environment.get().default_cluster.runner, recursive_context)
+        frame1 = StackFrame(
+            fn_sample_1.fn_reference().with_args(),
+            Environment.get().default_cluster.runner,
+            recursive_context,
+        )
+        frame2 = StackFrame(
+            fn_sample_1.fn_reference().with_args(),
+            Environment.get().default_cluster.runner,
+            recursive_context,
+        )
         call_stack.push_frame(frame1)
         assert call_stack.depth() == 1
         assert frame1 is call_stack.get_calling_frame()

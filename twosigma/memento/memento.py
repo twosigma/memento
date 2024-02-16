@@ -29,13 +29,19 @@ from .external import ExternalMementoFunctionBase
 from .logging import log
 from .types import MementoFunctionType, DependencyGraphType
 from .reference import FunctionReference
-from .code_hash import fn_code_hash, resolve_to_symbolic_names, \
-    HashRule, MementoFunctionHashRule, list_dotted_names
+from .code_hash import (
+    fn_code_hash,
+    resolve_to_symbolic_names,
+    HashRule,
+    MementoFunctionHashRule,
+    list_dotted_names,
+)
 from .metadata import ResultType
 
 
-_MementoFunctionVersionCacheEntry =\
-    namedtuple("_MementoFunctionVersionCacheEntry", ["as_of_generation", "version"])
+_MementoFunctionVersionCacheEntry = namedtuple(
+    "_MementoFunctionVersionCacheEntry", ["as_of_generation", "version"]
+)
 
 
 class MementoFunction(MementoFunctionBase):
@@ -81,7 +87,9 @@ class MementoFunction(MementoFunctionBase):
     forces all version hashes to be recomputed.
     """
 
-    _global_fn_version_cache = dict()  # type: Dict[str, _MementoFunctionVersionCacheEntry]
+    _global_fn_version_cache = (
+        dict()
+    )  # type: Dict[str, _MementoFunctionVersionCacheEntry]
     """
     Cache that maps from function name to a version cache entry that contains the
     generation number as of when this was current and the function version number.
@@ -123,7 +131,9 @@ class MementoFunction(MementoFunctionBase):
     auto_dependencies = None  # type: bool
     "If True, dependencies will be searched for automatically"
 
-    _constructor_provided_dependencies = None  # type: List[Union[str, MementoFunctionType]]
+    _constructor_provided_dependencies = (
+        None
+    )  # type: List[Union[str, MementoFunctionType]]
     "The explicit list of dependencies provided by the user"
 
     _constructor_provided_version_code_hash = None  # type: str
@@ -162,7 +172,9 @@ class MementoFunction(MementoFunctionBase):
         """True if function supports kwargs, False otherwise"""
         fn = self.fn
         # noinspection PyUnresolvedReferences
-        return hasattr(fn, "__code__") and (fn.__code__.co_flags & inspect.CO_VARKEYWORDS != 0)
+        return hasattr(fn, "__code__") and (
+            fn.__code__.co_flags & inspect.CO_VARKEYWORDS != 0
+        )
 
     def get_args(self) -> List[Dict[str, str]]:
         """
@@ -177,25 +189,27 @@ class MementoFunction(MementoFunctionBase):
             param = params[param_name]
             arg = {
                 "name": param.name,
-                "argumentType": ResultType.from_annotation(param.annotation).name
+                "argumentType": ResultType.from_annotation(param.annotation).name,
             }
             args.append(arg)
         return args
 
     def __init__(
-            self, fn: Callable,
-            src_fn: Callable = None,
-            cluster_name: str = None,
-            version: str = None,
-            calculated_version: str = None,
-            context: InvocationContext = None,
-            partial_args: Tuple[Any] = None,
-            partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, MementoFunctionType]] = None,
-            version_code_hash: str = None,
-            version_salt: str = None,
-            register_fn: bool = True):
+        self,
+        fn: Callable,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        context: InvocationContext = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, MementoFunctionType]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+        register_fn: bool = True,
+    ):
         """
         Creates a new MementoFunction that wraps the provided `fn`.
 
@@ -242,8 +256,9 @@ class MementoFunction(MementoFunctionBase):
 
         """
         assert inspect.isfunction(fn), "fn {} is not a function".format(fn)
-        assert not isinstance(fn, MementoFunctionType), \
-            "Cannot create a MementoFunction that wraps another MementoFunction"
+        assert not isinstance(
+            fn, MementoFunctionType
+        ), "Cannot create a MementoFunction that wraps another MementoFunction"
 
         self._hash_rules = []  # type: List[HashRule]
         self.fn = fn
@@ -258,7 +273,9 @@ class MementoFunction(MementoFunctionBase):
         elif version_code_hash is not None:
             code_hash = version_code_hash
         else:
-            code_hash = fn_code_hash(fn, salt=version_salt, environment=ENVIRONMENT_HASH_BYTES)
+            code_hash = fn_code_hash(
+                fn, salt=version_salt, environment=ENVIRONMENT_HASH_BYTES
+            )
         self.code_hash = code_hash
         self.context = context or InvocationContext()
 
@@ -274,12 +291,15 @@ class MementoFunction(MementoFunctionBase):
         # Resolve required dependencies to symbolic names so evaluation can be deferred.
         # This allows re-binding of functions later.
         self._constructor_provided_dependencies = dependencies
-        self.required_dependencies = resolve_to_symbolic_names(dependencies) \
-            if dependencies else set()
-        assert self.required_dependencies is None or \
-            all(isinstance(dep, str) for dep in self.required_dependencies),\
-            "Could not resolve all functions in dependencies to symbolic names"
-        self.detected_dependencies = list_dotted_names(self.src_fn) if auto_dependencies else set()
+        self.required_dependencies = (
+            resolve_to_symbolic_names(dependencies) if dependencies else set()
+        )
+        assert self.required_dependencies is None or all(
+            isinstance(dep, str) for dep in self.required_dependencies
+        ), "Could not resolve all functions in dependencies to symbolic names"
+        self.detected_dependencies = (
+            list_dotted_names(self.src_fn) if auto_dependencies else set()
+        )
 
         self.partial_args = partial_args
         self.partial_kwargs = partial_kwargs
@@ -287,8 +307,10 @@ class MementoFunction(MementoFunctionBase):
         self._fn_reference = None
 
         if "<locals>" in self.qualified_name_without_version:
-            raise ValueError("Memento functions must be top-level functions, "
-                             "not local to another function.")
+            raise ValueError(
+                "Memento functions must be top-level functions, "
+                "not local to another function."
+            )
 
         functools.update_wrapper(self, fn)
 
@@ -296,23 +318,27 @@ class MementoFunction(MementoFunctionBase):
             # Increase generation number so other functions can update their version number
             # if necessary
             MementoFunction.increment_global_fn_generation(
-                reason="registered new function {}".format(self.qualified_name_without_version))
+                reason="registered new function {}".format(
+                    self.qualified_name_without_version
+                )
+            )
             Environment.register_function(cluster_name, self)
 
     def clone_with(
-            self,
-            fn: Callable = None,
-            src_fn: Callable = None,
-            cluster_name: str = None,
-            version: str = None,
-            calculated_version: str = None,
-            context: InvocationContext = None,
-            partial_args: Tuple[Any] = None,
-            partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, MementoFunctionType]] = None,
-            version_code_hash: str = None,
-            version_salt: str = None) -> MementoFunctionType:
+        self,
+        fn: Callable = None,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        context: InvocationContext = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, MementoFunctionType]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+    ) -> MementoFunctionType:
         """Re-constructs a clone of this function, modifying one or more attributes"""
         return MementoFunction(
             fn=fn or self.fn,
@@ -325,22 +351,27 @@ class MementoFunction(MementoFunctionBase):
             partial_kwargs=partial_kwargs or self.partial_kwargs,
             auto_dependencies=auto_dependencies or self.auto_dependencies,
             dependencies=dependencies or self._constructor_provided_dependencies,
-            version_code_hash=version_code_hash or self._constructor_provided_version_code_hash,
+            version_code_hash=version_code_hash
+            or self._constructor_provided_version_code_hash,
             version_salt=version_salt or self._constructor_provided_version_salt,
-            register_fn=False)
+            register_fn=False,
+        )
 
     def call(self, *args, **kwargs):
         self._validate_dependency()
         return super(MementoFunction, self).call(*args, **kwargs)
 
-    def call_batch(self, kwargs_list: List[Dict[str, Any]],
-                   raise_first_exception=True) -> List[Any]:
+    def call_batch(
+        self, kwargs_list: List[Dict[str, Any]], raise_first_exception=True
+    ) -> List[Any]:
         self._validate_dependency()
         return super(MementoFunction, self).call_batch(
-            kwargs_list=kwargs_list, raise_first_exception=raise_first_exception)
+            kwargs_list=kwargs_list, raise_first_exception=raise_first_exception
+        )
 
-    def dependencies(self, verbose=False,
-                     label_filter: Callable[[str], str] = None) -> DependencyGraphType:
+    def dependencies(
+        self, verbose=False, label_filter: Callable[[str], str] = None
+    ) -> DependencyGraphType:
         """
         Return an object that allows the caller to explore the dependencies of this function
         on other memento functions, plain functions and global variables. When invoked from
@@ -368,11 +399,13 @@ class MementoFunction(MementoFunctionBase):
 
     def _update_fn_reference(self):
         """Update the _fn_reference attribute based on the latest computed version"""
-        self._fn_reference = FunctionReference(self,
-                                               cluster_name=self.cluster_name,
-                                               version=self.version(),
-                                               partial_args=self.partial_args,
-                                               partial_kwargs=self.partial_kwargs)
+        self._fn_reference = FunctionReference(
+            self,
+            cluster_name=self.cluster_name,
+            version=self.version(),
+            partial_args=self.partial_args,
+            partial_kwargs=self.partial_kwargs,
+        )
 
     def _update_dependencies(self):
         """Assemble dependencies and update the version and fn_reference"""
@@ -391,8 +424,13 @@ class MementoFunction(MementoFunctionBase):
 
         # Check the version cache to see if we need to recompute the version
         entry = None  # type: Optional[_MementoFunctionVersionCacheEntry]
-        if self.qualified_name_without_version in MementoFunction._global_fn_version_cache:
-            entry = MementoFunction._global_fn_version_cache[self.qualified_name_without_version]
+        if (
+            self.qualified_name_without_version
+            in MementoFunction._global_fn_version_cache
+        ):
+            entry = MementoFunction._global_fn_version_cache[
+                self.qualified_name_without_version
+            ]
             if entry.as_of_generation == MementoFunction._global_fn_generation:
                 changed_rules = [rule for rule in self._hash_rules if rule.did_change()]
                 if len(changed_rules) > 0:
@@ -402,7 +440,8 @@ class MementoFunction(MementoFunctionBase):
                     MementoFunction.increment_global_fn_generation(
                         reason="function {} hash rules changed: {}".format(
                             self.qualified_name_without_version,
-                            [rule.describe() for rule in changed_rules])
+                            [rule.describe() for rule in changed_rules],
+                        )
                     )
                 else:
                     if self._calculated_version is None:
@@ -419,15 +458,20 @@ class MementoFunction(MementoFunctionBase):
 
             if entry is None or (entry is not None and entry.version != version):
                 # Notify the user about the new version
-                log.debug("At generation {}, calculated version for fn {} as {}.".format(
-                    MementoFunction._global_fn_generation,
-                    self.qualified_name_without_version, version))
+                log.debug(
+                    "At generation {}, calculated version for fn {} as {}.".format(
+                        MementoFunction._global_fn_generation,
+                        self.qualified_name_without_version,
+                        version,
+                    )
+                )
 
         # Update the cache entry
         MementoFunction._global_fn_version_cache[
-            self.qualified_name_without_version] = _MementoFunctionVersionCacheEntry(
-            as_of_generation=MementoFunction._global_fn_generation,
-            version=version)
+            self.qualified_name_without_version
+        ] = _MementoFunctionVersionCacheEntry(
+            as_of_generation=MementoFunction._global_fn_generation, version=version
+        )
 
     def _recompute_version(self):
         """Collect dependencies and [re]compute the version of this function"""
@@ -436,13 +480,19 @@ class MementoFunction(MementoFunctionBase):
 
         hash_rules = set()  # type: Set[HashRule]
         # Collect dependencies
-        self_rule = MementoFunctionHashRule(parent_symbol=None,
-                                            symbol=self.qualified_name_without_version,
-                                            resolver=lambda: self, obj=self, first_level=True)
-        self_rule.collect_transitive_dependencies(result=hash_rules, root_fn=self,
-                                                  package_scope={inspect.getmodule(
-                                                      self.src_fn).__package__},
-                                                  blacklist=[memento_function])
+        self_rule = MementoFunctionHashRule(
+            parent_symbol=None,
+            symbol=self.qualified_name_without_version,
+            resolver=lambda: self,
+            obj=self,
+            first_level=True,
+        )
+        self_rule.collect_transitive_dependencies(
+            result=hash_rules,
+            root_fn=self,
+            package_scope={inspect.getmodule(self.src_fn).__package__},
+            blacklist=[memento_function],
+        )
 
         # Order hash rules
         ordered_hash_rules = sorted(hash_rules)
@@ -460,8 +510,9 @@ class MementoFunction(MementoFunctionBase):
         return version
 
     @staticmethod
-    def _extract_fn_ref_args(caller_args: Tuple, caller_kwargs: Dict,
-                             caller_context_args: Dict) -> Set[str]:
+    def _extract_fn_ref_args(
+        caller_args: Tuple, caller_kwargs: Dict, caller_context_args: Dict
+    ) -> Set[str]:
         """
         Assemble a list of arguments that are FunctionReferences, as these are valid to call.
         Note these can be nested in data structures like Lists or Dicts.
@@ -514,7 +565,9 @@ class MementoFunction(MementoFunctionBase):
             # Top of stack, so no caller. Any call is allowed.
             return
 
-        caller_ref = frame.memento.invocation_metadata.fn_reference_with_args.fn_reference
+        caller_ref = (
+            frame.memento.invocation_metadata.fn_reference_with_args.fn_reference
+        )
         caller = cast(MementoFunctionType, caller_ref.memento_fn)
         if caller.explicit_version is not None:
             # Caller has declared version explicitly, so there is no need to worry that
@@ -523,23 +576,33 @@ class MementoFunction(MementoFunctionBase):
 
         caller_args = frame.memento.invocation_metadata.fn_reference_with_args.args
         caller_kwargs = frame.memento.invocation_metadata.fn_reference_with_args.kwargs
-        caller_context_args = frame.memento.invocation_metadata.fn_reference_with_args.context_args
-        fn_ref_args = self._extract_fn_ref_args(caller_args, caller_kwargs, caller_context_args)
+        caller_context_args = (
+            frame.memento.invocation_metadata.fn_reference_with_args.context_args
+        )
+        fn_ref_args = self._extract_fn_ref_args(
+            caller_args, caller_kwargs, caller_context_args
+        )
 
         # Any dependency is a valid function
-        valid_fns = {fn.fn_reference().qualified_name
-                     for fn in caller.dependencies().transitive_memento_fn_dependencies()}
+        valid_fns = {
+            fn.fn_reference().qualified_name
+            for fn in caller.dependencies().transitive_memento_fn_dependencies()
+        }
 
         # Any argument that is a function reference is also valid
         valid_fns |= fn_ref_args
 
-        if caller.qualified_name_without_version != self.qualified_name_without_version and \
-                self.fn_reference().qualified_name not in valid_fns:
+        if (
+            caller.qualified_name_without_version != self.qualified_name_without_version
+            and self.fn_reference().qualified_name not in valid_fns
+        ):
             raise UndeclaredDependencyError(
                 "{target} is not declared or detected to be a dependency of {src}. "
-                "Solution: Add @memento_function(dependencies=[{target}]) to {src}.".
-                format(src=caller.qualified_name_without_version,
-                       target=self.qualified_name_without_version))
+                "Solution: Add @memento_function(dependencies=[{target}]) to {src}.".format(
+                    src=caller.qualified_name_without_version,
+                    target=self.qualified_name_without_version,
+                )
+            )
 
     @classmethod
     def increment_global_fn_generation(cls, reason=None):
@@ -550,8 +613,11 @@ class MementoFunction(MementoFunctionBase):
 
         """
         cls._global_fn_generation += 1
-        log.debug("New global generation{}: {}".format(
-            " ({})".format(reason) if reason else "", cls._global_fn_generation))
+        log.debug(
+            "New global generation{}: {}".format(
+                " ({})".format(reason) if reason else "", cls._global_fn_generation
+            )
+        )
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -560,12 +626,15 @@ class MementoFunction(MementoFunctionBase):
         return "{}.memento_fn".format(repr(self.fn_reference()))
 
 
-def memento_function(*plain_fn, cluster: str = None, version: Any = None,
-                     auto_dependencies: bool = True,
-                     dependencies: List[Union[Callable, MementoFunctionType]] = None,
-                     version_code_hash: str = None,
-                     version_salt: str = None) -> \
-        Union[MementoFunctionType, Callable[..., MementoFunctionType]]:
+def memento_function(
+    *plain_fn,
+    cluster: str = None,
+    version: Any = None,
+    auto_dependencies: bool = True,
+    dependencies: List[Union[Callable, MementoFunctionType]] = None,
+    version_code_hash: str = None,
+    version_salt: str = None,
+) -> Union[MementoFunctionType, Callable[..., MementoFunctionType]]:
     """
     Decorator that causes a function to be treated as a memento function.
     If it is called with the same parameters in the future, the result will be memoized and not
@@ -614,11 +683,15 @@ def memento_function(*plain_fn, cluster: str = None, version: Any = None,
 
     # This logic is to support both @memento_function and @memento_function() consistently:
     def decorator(fn) -> MementoFunction:
-        return MementoFunction(fn=fn, cluster_name=cluster, version=version,
-                               auto_dependencies=auto_dependencies,
-                               dependencies=dependencies,
-                               version_code_hash=version_code_hash,
-                               version_salt=version_salt)
+        return MementoFunction(
+            fn=fn,
+            cluster_name=cluster,
+            version=version,
+            auto_dependencies=auto_dependencies,
+            dependencies=dependencies,
+            version_code_hash=version_code_hash,
+            version_salt=version_salt,
+        )
 
     if cluster is None and len(plain_fn) == 1:
         # Decorator Invoked without arguments
@@ -628,28 +701,47 @@ def memento_function(*plain_fn, cluster: str = None, version: Any = None,
 
 
 class ExternalMementoFunction(ExternalMementoFunctionBase):
-    def __init__(self, fn_reference: FunctionReference, context: InvocationContext,
-                 hash_rules: List[HashRule]):
+    def __init__(
+        self,
+        fn_reference: FunctionReference,
+        context: InvocationContext,
+        hash_rules: List[HashRule],
+    ):
         super().__init__(fn_reference, context, "memento_function", hash_rules)
 
     def clone_with(
-            self, fn: Callable = None, src_fn: Callable = None, cluster_name: str = None,
-            version: str = None, calculated_version: str = None, context: InvocationContext = None,
-            partial_args: Tuple[Any] = None, partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, MementoFunctionType]] = None,
-            version_code_hash: str = None, version_salt: str = None) -> MementoFunctionType:
+        self,
+        fn: Callable = None,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        context: InvocationContext = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, MementoFunctionType]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+    ) -> MementoFunctionType:
         fn_ref = self._clone_fn_ref(
-            fn=fn, src_fn=src_fn, cluster_name=cluster_name, version=version,
-            calculated_version=calculated_version, partial_args=partial_args,
-            partial_kwargs=partial_kwargs, auto_dependencies=auto_dependencies,
-            dependencies=dependencies, version_code_hash=version_code_hash,
-            version_salt=version_salt
+            fn=fn,
+            src_fn=src_fn,
+            cluster_name=cluster_name,
+            version=version,
+            calculated_version=calculated_version,
+            partial_args=partial_args,
+            partial_kwargs=partial_kwargs,
+            auto_dependencies=auto_dependencies,
+            dependencies=dependencies,
+            version_code_hash=version_code_hash,
+            version_salt=version_salt,
         )
         return ExternalMementoFunction(
             fn_reference=fn_ref,
             context=context or self.context,
-            hash_rules=self._hash_rules)
+            hash_rules=self._hash_rules,
+        )
 
 
 ExternalMementoFunctionBase.register("memento_function", ExternalMementoFunction)
@@ -667,7 +759,11 @@ def forget_cluster(cluster_name: str = None):
     if cluster_config is None:
         raise ValueError("Cluster with name '{}' not found".format(cluster_name))
     storage_backend = cluster_config.storage
-    log.info("Forgetting all functions for all arg hashes in cluster_name {}".format(cluster_name))
+    log.info(
+        "Forgetting all functions for all arg hashes in cluster_name {}".format(
+            cluster_name
+        )
+    )
     storage_backend.forget_everything()
 
 

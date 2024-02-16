@@ -34,18 +34,26 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         cluster_config = Environment.get().get_cluster(fn_reference.cluster_name)
         if cluster_config is None:
             raise ValueError(
-                "No cluster found with name {}".format(fn_reference.cluster_name))
+                "No cluster found with name {}".format(fn_reference.cluster_name)
+            )
         storage_backend = cluster_config.storage
         runner_backend = cluster_config.runner
 
         # Call function as a batch function of size one.
-        results = memento_run_batch(context=self.context,
-                                    fn_reference_with_args=[FunctionReferenceWithArguments(
-                                        fn_reference, args, kwargs,
-                                        context_args=self.context.recursive.context_args)],
-                                    storage_backend=storage_backend,
-                                    runner_backend=runner_backend,
-                                    log_runner_backend=runner_backend)
+        results = memento_run_batch(
+            context=self.context,
+            fn_reference_with_args=[
+                FunctionReferenceWithArguments(
+                    fn_reference,
+                    args,
+                    kwargs,
+                    context_args=self.context.recursive.context_args,
+                )
+            ],
+            storage_backend=storage_backend,
+            runner_backend=runner_backend,
+            log_runner_backend=runner_backend,
+        )
 
         result = results[0]
         if isinstance(result, Exception):
@@ -53,8 +61,9 @@ class MementoFunctionBase(MementoFunctionType, ABC):
 
         return result
 
-    def call_batch(self, kwargs_list: List[Dict[str, Any]],
-                   raise_first_exception=True) -> List[Any]:
+    def call_batch(
+        self, kwargs_list: List[Dict[str, Any]], raise_first_exception=True
+    ) -> List[Any]:
         """
         Evaluates this function several times, in batch with the provided arguments.
 
@@ -76,28 +85,39 @@ class MementoFunctionBase(MementoFunctionType, ABC):
             if any([type(key) for key in kwargs.keys() if type(key) != str]):
                 raise TypeError(
                     "Keys must be strings for all kwargs in kwargs list. Got {}".format(
-                        kwargs_list))
+                        kwargs_list
+                    )
+                )
 
         # Get cluster configuration
         fn_reference = self.fn_reference()
         cluster_config = Environment.get().get_cluster(fn_reference.cluster_name)
         if cluster_config is None:
             raise ValueError(
-                "No cluster found with name {}".format(fn_reference.cluster_name))
+                "No cluster found with name {}".format(fn_reference.cluster_name)
+            )
         storage_backend = cluster_config.storage
         runner_backend = cluster_config.runner
 
         # Construct a list of FunctionReferenceWithArguments
-        fns = [FunctionReferenceWithArguments(fn_reference, args=(), kwargs=kwargs,
-                                              context_args=self.context.recursive.context_args)
-               for kwargs in kwargs_list]
+        fns = [
+            FunctionReferenceWithArguments(
+                fn_reference,
+                args=(),
+                kwargs=kwargs,
+                context_args=self.context.recursive.context_args,
+            )
+            for kwargs in kwargs_list
+        ]
 
         # Invoke the functions in a batch
-        result = memento_run_batch(context=self.context,
-                                   fn_reference_with_args=fns,
-                                   storage_backend=storage_backend,
-                                   runner_backend=runner_backend,
-                                   log_runner_backend=runner_backend)
+        result = memento_run_batch(
+            context=self.context,
+            fn_reference_with_args=fns,
+            storage_backend=storage_backend,
+            runner_backend=runner_backend,
+            log_runner_backend=runner_backend,
+        )
 
         if raise_first_exception:
             for r in result:
@@ -142,8 +162,9 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         assert kwargs is not None, "kwargs must not be None"
 
         keys = kwargs.keys()
-        assert len(
-            keys) == 1, "kwargs must contain exactly one key, corresponding to a fn parameter name"
+        assert (
+            len(keys) == 1
+        ), "kwargs must contain exactly one key, corresponding to a fn parameter name"
 
         name = next(x for x in keys)
         values = kwargs[name]
@@ -172,11 +193,15 @@ class MementoFunctionBase(MementoFunctionType, ABC):
 
         # Forget only the results for the provided parameters
         fn_reference_with_args = fn_reference.with_args(
-            *args, **kwargs, _memento_context_args=self.context.recursive.context_args)
+            *args, **kwargs, _memento_context_args=self.context.recursive.context_args
+        )
         arg_hash = fn_reference_with_args.arg_hash
 
         log.info(
-            "Forgetting {} for arg hash {}".format(fn_reference.qualified_name, arg_hash))
+            "Forgetting {} for arg hash {}".format(
+                fn_reference.qualified_name, arg_hash
+            )
+        )
         storage_backend.forget_call(fn_reference_with_args.fn_reference_with_arg_hash())
 
     def forget_all(self):
@@ -211,15 +236,21 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         cluster_config = Environment.get().get_cluster(fn_reference.cluster_name)
         if cluster_config is None:
             raise ValueError(
-                "No cluster found with name {}".format(fn_reference.cluster_name))
+                "No cluster found with name {}".format(fn_reference.cluster_name)
+            )
         storage_backend = cluster_config.storage
-        fa = FunctionReferenceWithArguments(fn_reference, args=args, kwargs=kwargs,
-                                            context_args=self.context.recursive.context_args)
+        fa = FunctionReferenceWithArguments(
+            fn_reference,
+            args=args,
+            kwargs=kwargs,
+            context_args=self.context.recursive.context_args,
+        )
         memento = storage_backend.get_memento(fa.fn_reference_with_arg_hash())
         if memento:
             return storage_backend.read_metadata(
                 memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-                key)
+                key,
+            )
         else:
             return None
 
@@ -228,7 +259,9 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         Sets whether calls after this one are prevented (`True`) or allowed (`False`).
 
         """
-        new_context = self.context.update_recursive("prevent_further_calls", prevent_calls)
+        new_context = self.context.update_recursive(
+            "prevent_further_calls", prevent_calls
+        )
         return self.clone_with(context=new_context)
 
     def with_context_args(self, context_args: Dict[str, Any]):
@@ -242,8 +275,9 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         Never modify the dict in place.
 
         """
-        assert context_args is not self.context.recursive.context_args, \
-            "Context arg dict must be cloned, not modified in-place"
+        assert (
+            context_args is not self.context.recursive.context_args
+        ), "Context arg dict must be cloned, not modified in-place"
         new_context = self.context.update_recursive("context_args", context_args)
         return self.clone_with(context=new_context)
 
@@ -295,8 +329,12 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         fn_reference = self.fn_reference()
         cluster_config = Environment.get().get_cluster(fn_reference.cluster_name)
         storage = cluster_config.storage
-        fa = FunctionReferenceWithArguments(fn_reference, args=args, kwargs=kwargs,
-                                            context_args=self.context.recursive.context_args)
+        fa = FunctionReferenceWithArguments(
+            fn_reference,
+            args=args,
+            kwargs=kwargs,
+            context_args=self.context.recursive.context_args,
+        )
         return storage.get_memento(fa.fn_reference_with_arg_hash())
 
     def monitor_progress(self, monitor: bool = True):
@@ -339,13 +377,19 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         fn_reference = self.fn_reference()
         new_partial_args = fn_reference.partial_args or ()
         new_partial_args += partial_args
-        new_partial_kwargs = dict(fn_reference.partial_kwargs) if \
-            fn_reference.partial_kwargs is not None else {}
+        new_partial_kwargs = (
+            dict(fn_reference.partial_kwargs)
+            if fn_reference.partial_kwargs is not None
+            else {}
+        )
         new_partial_kwargs.update(partial_kwargs)
-        return self.clone_with(partial_args=new_partial_args,
-                               partial_kwargs=new_partial_kwargs)
+        return self.clone_with(
+            partial_args=new_partial_args, partial_kwargs=new_partial_kwargs
+        )
 
-    def put_metadata(self, key: str, value: bytes, *args, store_with_data: bool = False, **kwargs):
+    def put_metadata(
+        self, key: str, value: bytes, *args, store_with_data: bool = False, **kwargs
+    ):
         """
         Write custom metadata for the given arguments to the given
         key. This is useful, for example, for writing logs to be
@@ -366,10 +410,15 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         cluster_config = Environment.get().get_cluster(fn_reference.cluster_name)
         if cluster_config is None:
             raise ValueError(
-                "No cluster found with name {}".format(fn_reference.cluster_name))
+                "No cluster found with name {}".format(fn_reference.cluster_name)
+            )
         storage_backend = cluster_config.storage
-        fa = FunctionReferenceWithArguments(fn_reference, args=args, kwargs=kwargs,
-                                            context_args=self.context.recursive.context_args)
+        fa = FunctionReferenceWithArguments(
+            fn_reference,
+            args=args,
+            kwargs=kwargs,
+            context_args=self.context.recursive.context_args,
+        )
         memento = storage_backend.get_memento(fa.fn_reference_with_arg_hash())
         if memento is None:
             raise MementoNotFoundError("No memento found with provided arguments")
@@ -380,7 +429,10 @@ class MementoFunctionBase(MementoFunctionType, ABC):
 
         storage_backend.write_metadata(
             memento.invocation_metadata.fn_reference_with_args.fn_reference_with_arg_hash(),
-            key, value, store_with_content_key=store_with_content_key)
+            key,
+            value,
+            store_with_content_key=store_with_content_key,
+        )
 
     def force_local(self, local: bool = True):
         """
@@ -413,7 +465,9 @@ class MementoFunctionBase(MementoFunctionType, ABC):
         If no results match, `None` is returned.
         """
         results = []
-        effective_kwargs = self.fn_reference().with_args(*args, **kwargs).effective_kwargs
+        effective_kwargs = (
+            self.fn_reference().with_args(*args, **kwargs).effective_kwargs
+        )
         context_args = self.context.recursive.context_args
         if context_args is None:
             context_args = {}

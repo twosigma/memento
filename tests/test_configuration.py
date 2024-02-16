@@ -53,10 +53,7 @@ class TestConfiguration:
         assert env.base_dir is None
 
     def test_environment_set_static(self):
-        m.Environment.set({
-            "name": "test1",
-            "repos": []
-        })
+        m.Environment.set({"name": "test1", "repos": []})
         env = m.Environment.get()
         assert "test1" == env.name
         assert [] == env.repos
@@ -102,7 +99,7 @@ class TestConfiguration:
             "maintainer": "maintainer1",
             "documentation": "doc1",
             "clusters": {},
-            "modules": ["a.b.c"]
+            "modules": ["a.b.c"],
         }
 
     @staticmethod
@@ -118,10 +115,7 @@ class TestConfiguration:
         self.assert_sample_config(m.ConfigurationRepository(self.get_sample_config()))
 
     def test_config_repo_env_static(self):
-        m.Environment.set({
-            "name": "test",
-            "repos": [self.get_sample_config()]
-        })
+        m.Environment.set({"name": "test", "repos": [self.get_sample_config()]})
         self.assert_sample_config(m.Environment.get().repos[0])
 
     def test_config_repo_env_file(self):
@@ -131,10 +125,7 @@ class TestConfiguration:
             config_file = "{}/config.json".format(d)
             with open(config_file, "w") as f:
                 json.dump(self.get_sample_config(), f)
-            m.Environment.set({
-                "name": "test",
-                "repos": [config_file]
-            })
+            m.Environment.set({"name": "test", "repos": [config_file]})
             self.assert_sample_config(m.Environment.get().repos[0])
         finally:
             if d:
@@ -146,10 +137,7 @@ class TestConfiguration:
             d = tempfile.mkdtemp(prefix="memento_test_configuration")
             env_file = "{}/env.json".format(d)
             with open(env_file, "w") as f:
-                json.dump({
-                    "name": "test",
-                    "repos": ["subdir/config.json"]
-                }, f)
+                json.dump({"name": "test", "repos": ["subdir/config.json"]}, f)
             os.mkdir("{}/subdir".format(d))
             config_file = "{}/subdir/config.json".format(d)
             with open(config_file, "w") as f:
@@ -167,10 +155,7 @@ class TestConfiguration:
             "description": "description1",
             "maintainer": "maintainer1",
             "documentation": "doc1",
-            "storage": {
-                "type": "null",
-                "readonly": True
-            }
+            "storage": {"type": "null", "readonly": True},
         }
 
     @staticmethod
@@ -191,14 +176,17 @@ class TestConfiguration:
             cluster_file = "{}/cluster.json".format(d)
             with open(cluster_file, "w") as f:
                 json.dump(self.get_sample_cluster(), f)
-            m.Environment.set({
-                "name": "test",
-                "repos": [{
-                    "name": "config1",
-                    "clusters": {"cluster1": cluster_file}
-                }]
-            })
-            self.assert_sample_cluster(m.Environment.get().repos[0].clusters["cluster1"])
+            m.Environment.set(
+                {
+                    "name": "test",
+                    "repos": [
+                        {"name": "config1", "clusters": {"cluster1": cluster_file}}
+                    ],
+                }
+            )
+            self.assert_sample_cluster(
+                m.Environment.get().repos[0].clusters["cluster1"]
+            )
         finally:
             if d:
                 shutil.rmtree(d)
@@ -209,54 +197,58 @@ class TestConfiguration:
             d = tempfile.mkdtemp(prefix="memento_test_configuration")
             config_file = "{}/config.json".format(d)
             with open(config_file, "w") as f:
-                json.dump({
-                    "name": "config1",
-                    "clusters": {"cluster1": "cluster_subdir/cluster.json"}
-                }, f)
+                json.dump(
+                    {
+                        "name": "config1",
+                        "clusters": {"cluster1": "cluster_subdir/cluster.json"},
+                    },
+                    f,
+                )
             cluster_file = "{}/cluster_subdir/cluster.json".format(d)
             os.mkdir("{}/cluster_subdir".format(d))
             with open(cluster_file, "w") as f:
                 json.dump(self.get_sample_cluster(), f)
-            m.Environment.set({
-                "name": "test",
-                "repos": [config_file]
-            })
-            self.assert_sample_cluster(m.Environment.get().repos[0].clusters["cluster1"])
+            m.Environment.set({"name": "test", "repos": [config_file]})
+            self.assert_sample_cluster(
+                m.Environment.get().repos[0].clusters["cluster1"]
+            )
         finally:
             if d:
                 shutil.rmtree(d)
 
     def test_get_cluster(self):
-        m.Environment.set({
-            "name": "test",
-            "repos": [
-                {
-                    "name": "repo1",
-                    "clusters": {
-                        "A": {
-                            "name": "A",
-                            "description": "1",
-                            "storage": {"type": "null"}
-                        }
-                    }
-                },
-                {
-                    "name": "repo2",
-                    "clusters": {
-                        "A": {
-                            "name": "A",
-                            "description": "2",
-                            "storage": {"type": "null"}
+        m.Environment.set(
+            {
+                "name": "test",
+                "repos": [
+                    {
+                        "name": "repo1",
+                        "clusters": {
+                            "A": {
+                                "name": "A",
+                                "description": "1",
+                                "storage": {"type": "null"},
+                            }
                         },
-                        "B": {
-                            "name": "B",
-                            "description": "3",
-                            "storage": {"type": "null"}
-                        }
-                    }
-                }
-            ]
-        })
+                    },
+                    {
+                        "name": "repo2",
+                        "clusters": {
+                            "A": {
+                                "name": "A",
+                                "description": "2",
+                                "storage": {"type": "null"},
+                            },
+                            "B": {
+                                "name": "B",
+                                "description": "3",
+                                "storage": {"type": "null"},
+                            },
+                        },
+                    },
+                ],
+            }
+        )
         env = m.Environment.get()
         assert "1" == env.get_cluster("A").description
         assert "3" == env.get_cluster("B").description
@@ -270,20 +262,17 @@ class TestConfiguration:
         assert "filesystem" == cluster.storage.storage_type
 
     def test_default_storage_is_filesystem(self):
-        m.Environment.set({
-            "name": "test",
-            "repos": [
-                {
-                    "name": "repo1",
-                    "clusters": {
-                        "A": {
-                            "name": "A",
-                            "description": "1"
-                        }
+        m.Environment.set(
+            {
+                "name": "test",
+                "repos": [
+                    {
+                        "name": "repo1",
+                        "clusters": {"A": {"name": "A", "description": "1"}},
                     }
-                }
-            ]
-        })
+                ],
+            }
+        )
         env = m.Environment.get()
         cluster = env.get_cluster("A")
         assert "filesystem" == cluster.storage.storage_type
@@ -297,58 +286,49 @@ class TestConfiguration:
         assert "test_cluster" in m.Environment.get_registered_clusters()
 
     def test_get_repo(self):
-        m.Environment.set({
-            "name": "test",
-            "repos": [
-                {
-                    "name": "repo1",
-                    "clusters": {
-                        "A": {
-                            "name": "A",
-                            "description": "1"
-                        }
+        m.Environment.set(
+            {
+                "name": "test",
+                "repos": [
+                    {
+                        "name": "repo1",
+                        "clusters": {"A": {"name": "A", "description": "1"}},
                     }
-                }
-            ]
-        })
+                ],
+            }
+        )
         env = m.Environment.get()
         assert "repo1" == env.get_repo("repo1").name
         assert env.get_repo("repo2") is None
 
     def test_append_repo(self):
-        m.Environment.set({
-            "name": "test",
-            "repos": [
-                {
-                    "name": "repo1",
-                    "clusters": {
-                        "A": {
-                            "name": "A",
-                            "description": "1"
-                        }
+        m.Environment.set(
+            {
+                "name": "test",
+                "repos": [
+                    {
+                        "name": "repo1",
+                        "clusters": {"A": {"name": "A", "description": "1"}},
                     }
-                }
-            ]
-        })
+                ],
+            }
+        )
         env = m.Environment.get()
         env.append_repo(ConfigurationRepository(name="repo2"))
         assert "repo2" == env.repos[-1].name
 
     def test_prepend_repo(self):
-        m.Environment.set({
-            "name": "test",
-            "repos": [
-                {
-                    "name": "repo1",
-                    "clusters": {
-                        "A": {
-                            "name": "A",
-                            "description": "1"
-                        }
+        m.Environment.set(
+            {
+                "name": "test",
+                "repos": [
+                    {
+                        "name": "repo1",
+                        "clusters": {"A": {"name": "A", "description": "1"}},
                     }
-                }
-            ]
-        })
+                ],
+            }
+        )
         env = m.Environment.get()
         env.prepend_repo(ConfigurationRepository(name="repo2"))
         assert "repo2" == env.repos[0].name
@@ -371,33 +351,30 @@ class TestConfiguration:
         assert not Environment.is_function_registered(qn + "x")
 
     def test_env_to_dict(self):
-        m.Environment.set({
-            "name": "e_name",
-            "base_dir": "e_basedir",
-            "repos": [
-                {
-                    "name": "r_name",
-                    "base_dir": "r_basedir",
-                    "description": "r_description",
-                    "maintainer": "r_maintainer",
-                    "clusters": {
-                        "c_name": {
-                            "name": "c_name",
-                            "description": "c_description",
-                            "maintainer": "c_maintainer",
-                            "documentation": "c_doc",
-                            "storage": {
-                                "type": "filesystem",
-                                "path": "/tmp"
-                            },
-                            "runner": {
-                                "type": "local"
+        m.Environment.set(
+            {
+                "name": "e_name",
+                "base_dir": "e_basedir",
+                "repos": [
+                    {
+                        "name": "r_name",
+                        "base_dir": "r_basedir",
+                        "description": "r_description",
+                        "maintainer": "r_maintainer",
+                        "clusters": {
+                            "c_name": {
+                                "name": "c_name",
+                                "description": "c_description",
+                                "maintainer": "c_maintainer",
+                                "documentation": "c_doc",
+                                "storage": {"type": "filesystem", "path": "/tmp"},
+                                "runner": {"type": "local"},
                             }
-                        }
+                        },
                     }
-                }
-            ]
-        })
+                ],
+            }
+        )
         env = m.Environment.get()
         env_dict = env.to_dict()
         env2 = m.Environment(env_dict)
@@ -432,6 +409,8 @@ class TestConfiguration:
         cluster.locked = True
         try:
             with pytest.raises(ValueError):
-                Environment.register_function(None, m.memento_function(not_yet_registered_fn))
+                Environment.register_function(
+                    None, m.memento_function(not_yet_registered_fn)
+                )
         finally:
             cluster.locked = False

@@ -71,7 +71,7 @@ class TestDependencyGraph:
         self.env_before = Environment.get()
         self.env_dir = tempfile.mkdtemp(prefix="dependencyGraphTest")
         env_file = "{}/env.json".format(self.env_dir)
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             print("""{"name": "test"}""", file=f)
         Environment.set(env_file)
 
@@ -97,20 +97,30 @@ class TestDependencyGraph:
 
     def test_df(self):
         deps = dep_a.dependencies(verbose=True)  # type: DependencyGraphType
-        expected_df = pd.DataFrame(data=[
-            {"src": dep_a.qualified_name_without_version,
-             "target": dep_b.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": dep_a.qualified_name_without_version,
-             "target": "no_such_symbol",
-             "type": "UndefinedSymbol"},
-            {"src": dep_b.qualified_name_without_version,
-             "target": dep_c.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": dep_c.qualified_name_without_version,
-             "target": "global_var",
-             "type": "GlobalVariable"}
-        ]).sort_values(by="src")
+        expected_df = pd.DataFrame(
+            data=[
+                {
+                    "src": dep_a.qualified_name_without_version,
+                    "target": dep_b.qualified_name_without_version,
+                    "type": "MementoFunction",
+                },
+                {
+                    "src": dep_a.qualified_name_without_version,
+                    "target": "no_such_symbol",
+                    "type": "UndefinedSymbol",
+                },
+                {
+                    "src": dep_b.qualified_name_without_version,
+                    "target": dep_c.qualified_name_without_version,
+                    "type": "MementoFunction",
+                },
+                {
+                    "src": dep_c.qualified_name_without_version,
+                    "target": "global_var",
+                    "type": "GlobalVariable",
+                },
+            ]
+        ).sort_values(by="src")
         actual_df = deps.df().sort_values(by="src")
         pd.testing.assert_frame_equal(expected_df, actual_df)
 
@@ -125,8 +135,15 @@ class TestDependencyGraph:
         dep_df = dep.df()
         assert any("_test_cycle_2" in name for name in dep_df.src.values)
         assert any("_test_cycle_2" in name for name in dep_df.target.values)
-        assert len(
-            dep_df[dep_df["src"].str.contains("_test_cycle_2") & dep_df["target"].str.contains("_test_cycle_3")]) == 1
+        assert (
+            len(
+                dep_df[
+                    dep_df["src"].str.contains("_test_cycle_2")
+                    & dep_df["target"].str.contains("_test_cycle_3")
+                ]
+            )
+            == 1
+        )
 
     def test_label_filter(self):
         graph = _fn_test_cycle_1.dependencies(label_filter=lambda x: "FILTERED").graph()
@@ -136,17 +153,27 @@ class TestDependencyGraph:
     def test_rules_until_first_memento_fn(self):
         def validate(expected, deps):
             for pair in expected:
-                assert 1 == len([r for r in deps if f"fn_{pair[0]}" in r.parent_symbol and
-                                 f"fn_{pair[1]}" in r.symbol]), f"{pair} not found"
+                assert 1 == len(
+                    [
+                        r
+                        for r in deps
+                        if f"fn_{pair[0]}" in r.parent_symbol
+                        and f"fn_{pair[1]}" in r.symbol
+                    ]
+                ), f"{pair} not found"
             assert len(expected) == len(deps)
 
         # noinspection PyTypeChecker
-        validate((("e", "c"), ("e", "d"), ("e", "G")),
-                 DependencyGraph._rules_until_first_memento_fn(fn_e))
+        validate(
+            (("e", "c"), ("e", "d"), ("e", "G")),
+            DependencyGraph._rules_until_first_memento_fn(fn_e),
+        )
 
         # noinspection PyTypeChecker
-        validate((("c", "b"), ("b", "e"), ("b", "f"), ("b", "a")),
-                 DependencyGraph._rules_until_first_memento_fn(fn_c))
+        validate(
+            (("c", "b"), ("b", "e"), ("b", "f"), ("b", "a")),
+            DependencyGraph._rules_until_first_memento_fn(fn_c),
+        )
 
     def test_complex_graph_verbose(self):
         # noinspection PyTypeChecker
@@ -155,35 +182,59 @@ class TestDependencyGraph:
     @staticmethod
     def do_test_complex_graph_verbose(a, c, d, e, f):
         deps = c.dependencies(verbose=True)  # type: DependencyGraph
-        expected_df = pd.DataFrame(data=[
-            {"src": a.qualified_name_without_version,
-             "target": e.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": "twosigma.memento.runner_test:fn_b",
-             "target": a.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": "twosigma.memento.runner_test:fn_b",
-             "target": e.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": "twosigma.memento.runner_test:fn_b",
-             "target": f.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": c.qualified_name_without_version,
-             "target": "twosigma.memento.runner_test:fn_b",
-             "type": "Function"},
-            {"src": d.qualified_name_without_version,
-             "target": a.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": e.qualified_name_without_version,
-             "target": "fn_G",
-             "type": "GlobalVariable"},
-            {"src": e.qualified_name_without_version,
-             "target": c.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": e.qualified_name_without_version,
-             "target": d.qualified_name_without_version,
-             "type": "MementoFunction"}
-        ]).sort_values(by=["src", "target"]).reset_index(drop=True)
+        expected_df = (
+            pd.DataFrame(
+                data=[
+                    {
+                        "src": a.qualified_name_without_version,
+                        "target": e.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": "twosigma.memento.runner_test:fn_b",
+                        "target": a.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": "twosigma.memento.runner_test:fn_b",
+                        "target": e.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": "twosigma.memento.runner_test:fn_b",
+                        "target": f.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": c.qualified_name_without_version,
+                        "target": "twosigma.memento.runner_test:fn_b",
+                        "type": "Function",
+                    },
+                    {
+                        "src": d.qualified_name_without_version,
+                        "target": a.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": e.qualified_name_without_version,
+                        "target": "fn_G",
+                        "type": "GlobalVariable",
+                    },
+                    {
+                        "src": e.qualified_name_without_version,
+                        "target": c.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": e.qualified_name_without_version,
+                        "target": d.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                ]
+            )
+            .sort_values(by=["src", "target"])
+            .reset_index(drop=True)
+        )
         actual_df = deps.df().sort_values(by=["src", "target"]).reset_index(drop=True)
         pd.testing.assert_frame_equal(expected_df, actual_df)
 
@@ -194,28 +245,48 @@ class TestDependencyGraph:
     @staticmethod
     def do_test_complex_graph(a, c, d, e, f):
         deps = c.dependencies()  # type: DependencyGraph
-        expected_df = pd.DataFrame(data=[
-            {"src": a.qualified_name_without_version,
-             "target": e.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": c.qualified_name_without_version,
-             "target": a.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": c.qualified_name_without_version,
-             "target": e.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": c.qualified_name_without_version,
-             "target": f.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": d.qualified_name_without_version,
-             "target": a.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": e.qualified_name_without_version,
-             "target": c.qualified_name_without_version,
-             "type": "MementoFunction"},
-            {"src": e.qualified_name_without_version,
-             "target": d.qualified_name_without_version,
-             "type": "MementoFunction"},
-        ]).sort_values(by=["src", "target"]).reset_index(drop=True)
+        expected_df = (
+            pd.DataFrame(
+                data=[
+                    {
+                        "src": a.qualified_name_without_version,
+                        "target": e.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": c.qualified_name_without_version,
+                        "target": a.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": c.qualified_name_without_version,
+                        "target": e.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": c.qualified_name_without_version,
+                        "target": f.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": d.qualified_name_without_version,
+                        "target": a.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": e.qualified_name_without_version,
+                        "target": c.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                    {
+                        "src": e.qualified_name_without_version,
+                        "target": d.qualified_name_without_version,
+                        "type": "MementoFunction",
+                    },
+                ]
+            )
+            .sort_values(by=["src", "target"])
+            .reset_index(drop=True)
+        )
         actual_df = deps.df().sort_values(by=["src", "target"]).reset_index(drop=True)
         pd.testing.assert_frame_equal(expected_df, actual_df)

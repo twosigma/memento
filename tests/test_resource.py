@@ -45,7 +45,7 @@ class TestResource:
         self.env_before = m.Environment.get()
         self.env_dir = tempfile.mkdtemp(prefix="resourceTest")
         env_file = "{}/env.json".format(self.env_dir)
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             print("""{"name": "test"}""", file=f)
         m.Environment.set(env_file)
         _called = False

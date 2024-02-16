@@ -18,6 +18,7 @@ import pandas as pd
 import numpy as np
 
 import pytest
+
 # There is no public equivalent, so we import the protected function.
 # If it is ever removed, we can replace it in the unit test.
 # noinspection PyProtectedMember
@@ -38,12 +39,12 @@ def fn_test1():
 
 @memento_function
 def fn_test_long():
-    return bytes([1]) * (2**31-12)
+    return bytes([1]) * (2**31 - 12)
 
 
 @memento_function
 def fn_test_long_str():
-    return "1" * (2**31-12)
+    return "1" * (2**31 - 12)
 
 
 class TestMemoryCache:
@@ -56,15 +57,16 @@ class TestMemoryCache:
             invocation_metadata=InvocationMetadata(
                 runtime=datetime.timedelta(seconds=123.0),
                 fn_reference_with_args=FunctionReferenceWithArguments(
-                    fn_test1.fn_reference(), (), {}),
+                    fn_test1.fn_reference(), (), {}
+                ),
                 result_type=ResultType.number,
                 invocations=[],
-                resources=[]
+                resources=[],
             ),
             function_dependencies={fn_test1.fn_reference()},
             runner={},
             correlation_id="abc123",
-            content_key=VersionedDataSourceKey("key", "def456")
+            content_key=VersionedDataSourceKey("key", "def456"),
         )
 
     @pytest.mark.skip(reason="test needs further investigation")
@@ -95,16 +97,20 @@ class TestMemoryCache:
         memento = self.get_dummy_memento()
         arg_hash = memento.invocation_metadata.fn_reference_with_args.arg_hash
         # Note: This also tests the stability of the function code hash
-        assert "tests.test_storage_base:fn_test1#de769e9c8c9b500e/{}".format(arg_hash) == \
-               cache._cache_key_for_memento(memento)
+        assert "tests.test_storage_base:fn_test1#de769e9c8c9b500e/{}".format(
+            arg_hash
+        ) == cache._cache_key_for_memento(memento)
 
     @pytest.mark.needs_canonical_version
     def test_cache_key_for_fn(self):
         cache = MemoryCache(1)
-        arg_hash = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {}).arg_hash
+        arg_hash = FunctionReferenceWithArguments(
+            fn_test1.fn_reference(), (), {}
+        ).arg_hash
         # Note: This also tests the stability of the function code hash
-        assert "tests.test_storage_base:fn_test1#de769e9c8c9b500e/{}".format(arg_hash) == \
-            cache._cache_key_for_fn(fn_test1.fn_reference(), arg_hash)
+        assert "tests.test_storage_base:fn_test1#de769e9c8c9b500e/{}".format(
+            arg_hash
+        ) == cache._cache_key_for_fn(fn_test1.fn_reference(), arg_hash)
 
     def test_put_read_result(self):
         cache = MemoryCache(1)
@@ -141,7 +147,9 @@ class TestMemoryCache:
     def test_is_memoized(self):
         cache = MemoryCache(1)
         memento = self.get_dummy_memento()
-        arg_hash = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {}).arg_hash
+        arg_hash = FunctionReferenceWithArguments(
+            fn_test1.fn_reference(), (), {}
+        ).arg_hash
         assert not cache.is_memoized(fn_test1.fn_reference(), arg_hash)
         cache.put(memento, 1, has_result=True)
         assert cache.is_memoized(fn_test1.fn_reference(), arg_hash)
@@ -149,7 +157,9 @@ class TestMemoryCache:
     def test_is_all_memoized(self):
         cache = MemoryCache(1)
         memento = self.get_dummy_memento()
-        fn_reference_with_args = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {})
+        fn_reference_with_args = FunctionReferenceWithArguments(
+            fn_test1.fn_reference(), (), {}
+        )
         assert not cache.is_all_memoized([fn_reference_with_args])
         cache.put(memento, 1, has_result=True)
         assert cache.is_all_memoized([fn_reference_with_args])
@@ -158,28 +168,46 @@ class TestMemoryCache:
         cache = MemoryCache(1)
         memento = self.get_dummy_memento()
         cache.put(memento, 1, has_result=True)
-        fn_reference_with_args = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {})
-        assert cache.is_memoized(fn_test1.fn_reference(), fn_reference_with_args.arg_hash)
+        fn_reference_with_args = FunctionReferenceWithArguments(
+            fn_test1.fn_reference(), (), {}
+        )
+        assert cache.is_memoized(
+            fn_test1.fn_reference(), fn_reference_with_args.arg_hash
+        )
         cache.forget_call(fn_reference_with_args.fn_reference_with_arg_hash())
-        assert not cache.is_memoized(fn_test1.fn_reference(), fn_reference_with_args.arg_hash)
+        assert not cache.is_memoized(
+            fn_test1.fn_reference(), fn_reference_with_args.arg_hash
+        )
 
     def test_forget_everything(self):
         cache = MemoryCache(1)
         memento = self.get_dummy_memento()
         cache.put(memento, 1, has_result=True)
-        fn_reference_with_args = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {})
-        assert cache.is_memoized(fn_test1.fn_reference(), fn_reference_with_args.arg_hash)
+        fn_reference_with_args = FunctionReferenceWithArguments(
+            fn_test1.fn_reference(), (), {}
+        )
+        assert cache.is_memoized(
+            fn_test1.fn_reference(), fn_reference_with_args.arg_hash
+        )
         cache.forget_everything()
-        assert not cache.is_memoized(fn_test1.fn_reference(), fn_reference_with_args.arg_hash)
+        assert not cache.is_memoized(
+            fn_test1.fn_reference(), fn_reference_with_args.arg_hash
+        )
 
     def test_forget_function(self):
         cache = MemoryCache(1)
         memento = self.get_dummy_memento()
         cache.put(memento, 1, has_result=True)
-        fn_reference_with_args = FunctionReferenceWithArguments(fn_test1.fn_reference(), (), {})
-        assert cache.is_memoized(fn_test1.fn_reference(), fn_reference_with_args.arg_hash)
+        fn_reference_with_args = FunctionReferenceWithArguments(
+            fn_test1.fn_reference(), (), {}
+        )
+        assert cache.is_memoized(
+            fn_test1.fn_reference(), fn_reference_with_args.arg_hash
+        )
         cache.forget_function(fn_test1.fn_reference())
-        assert not cache.is_memoized(fn_test1.fn_reference(), fn_reference_with_args.arg_hash)
+        assert not cache.is_memoized(
+            fn_test1.fn_reference(), fn_reference_with_args.arg_hash
+        )
 
 
 class TestSerializationStrategy:
@@ -190,9 +218,11 @@ class TestSerializationStrategy:
         # DataFrame to ensure it can be encoded.
 
         arr = np.random.randint(0, 1000000, size=250) * 10
-        df = pd.DataFrame({'test': arr})
+        df = pd.DataFrame({"test": arr})
         total_mem = df.memory_usage(deep=True).sum()
-        assert total_mem >= 1024 * 1024 * 1024 * 2, 'Memory used: {}'.format(total_mem)  # 2 GB
+        assert total_mem >= 1024 * 1024 * 1024 * 2, "Memory used: {}".format(
+            total_mem
+        )  # 2 GB
 
         # IPC strategy should work
         strategy = DefaultCodec.ValuePickleStrategy()
@@ -211,15 +241,25 @@ class TestSerializationStrategy:
         elif isinstance(first, np.ndarray):
             assert_array_equal(first, second, message)
         elif isinstance(first, list):
-            assert len(first) == len(second), f'Different lengths: {len(first)} vs {len(second)}: {message}'
+            assert len(first) == len(
+                second
+            ), f"Different lengths: {len(first)} vs {len(second)}: {message}"
             for i in range(0, len(first)):
-                self.assert_equality(first[i], second[i],
-                                     f'Difference at index {i}: {first[i]} vs {second[i]}: {message}')
+                self.assert_equality(
+                    first[i],
+                    second[i],
+                    f"Difference at index {i}: {first[i]} vs {second[i]}: {message}",
+                )
         elif isinstance(first, dict):
-            assert first.keys() == second.keys(), f'Different keys: {first.keys()} vs {second.keys()}: {message}'
+            assert (
+                first.keys() == second.keys()
+            ), f"Different keys: {first.keys()} vs {second.keys()}: {message}"
             for key in first:
-                self.assert_equality(first[key], second[key],
-                                     f'Difference at key {key}: {first[key]} vs {second[key]}: {message}')
+                self.assert_equality(
+                    first[key],
+                    second[key],
+                    f"Difference at key {key}: {first[key]} vs {second[key]}: {message}",
+                )
         else:
             assert first == second, message
 
@@ -227,36 +267,36 @@ class TestSerializationStrategy:
         test_values = [
             False,
             True,
-            '',
-            'abc',
-            b'\x80\x02\x03',
-            '42',
-            '-9.2718',
+            "",
+            "abc",
+            b"\x80\x02\x03",
+            "42",
+            "-9.2718",
             datetime.date.today(),
             datetime.datetime.now(),
             datetime.timedelta(days=3, minutes=7, milliseconds=200),
             {},
-            {'a': [4, 'foo', None]},
+            {"a": [4, "foo", None]},
             [],
-            [5, 'wat', True, [{}, []]],
-            pd.DataFrame({'a': np.random.rand(5)}),
+            [5, "wat", True, [{}, []]],
+            pd.DataFrame({"a": np.random.rand(5)}),
             np.random.rand(5),
-            pd.Series([1, 2, 3], index=pd.Index(['a', 'b', 'c']), name='foo'),
-            pd.Index([1, 2, 3], name='foo'),
+            pd.Series([1, 2, 3], index=pd.Index(["a", "b", "c"]), name="foo"),
+            pd.Index([1, 2, 3], name="foo"),
         ]
         strategy = DefaultCodec.ValuePickleStrategy()
         for val in test_values:
             encoded = strategy.encode(val)
             decoded = strategy.decode(encoded)
-            self.assert_equality(val, decoded, f'Failed on: {val}, decoded={decoded}')
+            self.assert_equality(val, decoded, f"Failed on: {val}, decoded={decoded}")
 
     def test_encode_list(self):
         test_values = [
             [],
             [7],
             [[42]],
-            ['hello', [42], [[[datetime.datetime.now()], -8.6], [['abc'], 'xyz']]],
-            [True, [], None, {}, 'z', 42, 3.14159, b'\x80\x02\x03'],
+            ["hello", [42], [[[datetime.datetime.now()], -8.6], [["abc"], "xyz"]]],
+            [True, [], None, {}, "z", 42, 3.14159, b"\x80\x02\x03"],
             [pd.DataFrame([1, 2]), [pd.DataFrame([3, 4])]],
         ]
         strategy = DefaultCodec.ValuePickleStrategy()
@@ -265,16 +305,16 @@ class TestSerializationStrategy:
             encoded = strategy.encode(val)
             decoded = strategy.decode(encoded)
             assert isinstance(decoded, list)
-            self.assert_equality(val, decoded, f'Failed on: {val}, decoded={decoded}')
+            self.assert_equality(val, decoded, f"Failed on: {val}, decoded={decoded}")
 
     def test_encode_dict(self):
         test_values = [
             {},
-            {'a': None},
-            {'a': 'foo'},
-            {'a': 'foo', 'b': 'bar', 'c': 42, 'd': False},
-            {'a': -6.1, 'b': None, 'c': [], 'd': {'e': {}, 'f': ['nested', 'things']}},
-            {'a': pd.DataFrame([1, 2]), 'b': {'c': [pd.DataFrame([3, 4])]}},
+            {"a": None},
+            {"a": "foo"},
+            {"a": "foo", "b": "bar", "c": 42, "d": False},
+            {"a": -6.1, "b": None, "c": [], "d": {"e": {}, "f": ["nested", "things"]}},
+            {"a": pd.DataFrame([1, 2]), "b": {"c": [pd.DataFrame([3, 4])]}},
         ]
         strategy = DefaultCodec.ValuePickleStrategy()
         for val in test_values:
@@ -282,15 +322,15 @@ class TestSerializationStrategy:
             encoded = strategy.encode(val)
             decoded = strategy.decode(encoded)
             assert isinstance(decoded, dict)
-            self.assert_equality(val, decoded, f'Failed on: {val}, decoded={decoded}')
+            self.assert_equality(val, decoded, f"Failed on: {val}, decoded={decoded}")
 
     def test_encode_series(self):
         test_values = [
             pd.Series([], dtype=int),
             pd.Series([1, 2, 3]),
-            pd.Series([1, 2, 3], name='foo'),
-            pd.Series([1, 2, 3], index=pd.Index(['a', 'b', 'c'])),
-            pd.Series([1, 2, 3], index=pd.Index(['a', 'b', 'c']), name='foo'),
+            pd.Series([1, 2, 3], name="foo"),
+            pd.Series([1, 2, 3], index=pd.Index(["a", "b", "c"])),
+            pd.Series([1, 2, 3], index=pd.Index(["a", "b", "c"]), name="foo"),
         ]
         strategy = DefaultCodec.ValuePickleStrategy()
         for val in test_values:
@@ -298,15 +338,17 @@ class TestSerializationStrategy:
             encoded = strategy.encode(val)
             decoded = strategy.decode(encoded)
             assert isinstance(decoded, pd.Series)
-            self.assert_equality(val, decoded, f'Failed on: {val}, decoded={decoded}')
+            self.assert_equality(val, decoded, f"Failed on: {val}, decoded={decoded}")
 
     def test_encode_index(self):
         test_values = [
             pd.Index([]),
             pd.Index([1, 2, 3]),
-            pd.Index([1, 2, 3], name='foo'),
-            pd.date_range('2020-01-01', periods=10, freq='D'),
-            pd.MultiIndex.from_arrays([[7, 8, 9], ['red', 'green', 'blue']], names=('n', 'c')),
+            pd.Index([1, 2, 3], name="foo"),
+            pd.date_range("2020-01-01", periods=10, freq="D"),
+            pd.MultiIndex.from_arrays(
+                [[7, 8, 9], ["red", "green", "blue"]], names=("n", "c")
+            ),
         ]
         strategy = DefaultCodec.ValuePickleStrategy()
         for val in test_values:
@@ -314,7 +356,7 @@ class TestSerializationStrategy:
             encoded = strategy.encode(val)
             decoded = strategy.decode(encoded)
             assert isinstance(decoded, pd.Index)
-            self.assert_equality(val, decoded, f'Failed on: {val}, decoded={decoded}')
+            self.assert_equality(val, decoded, f"Failed on: {val}, decoded={decoded}")
 
     def test_encode_numpy_array(self):
         test_values = [
@@ -329,7 +371,7 @@ class TestSerializationStrategy:
             encoded = strategy.encode(val)
             decoded = strategy.decode(encoded)
             assert isinstance(decoded, np.ndarray)
-            self.assert_equality(val, decoded, f'Failed on: {val}, decoded={decoded}')
+            self.assert_equality(val, decoded, f"Failed on: {val}, decoded={decoded}")
 
     @pytest.mark.slow
     def test_serialize_longbytes(self):
@@ -338,8 +380,8 @@ class TestSerializationStrategy:
         encoded = strategy.encode(val)
         decoded = strategy.decode(encoded)
 
-        assert val == decoded, f'Failed test on: {val}, decoded={decoded}'
-        self.assert_equality(val, decoded, f'Failed test on: {val}, decoded={decoded}')
+        assert val == decoded, f"Failed test on: {val}, decoded={decoded}"
+        self.assert_equality(val, decoded, f"Failed test on: {val}, decoded={decoded}")
 
     @pytest.mark.slow
     def test_serialize_longstring(self):
@@ -347,7 +389,7 @@ class TestSerializationStrategy:
         val = "\u0009\u000A\u0026\u2022\u25E6\u2219\u2023\u2043" * (2**27)
         encoded = strategy.encode(val)
         decoded = strategy.decode(encoded)
-        assert val == decoded, f'Failed test on: {val}, decoded={decoded}'
+        assert val == decoded, f"Failed test on: {val}, decoded={decoded}"
 
     @pytest.mark.slow
     def test_long_bytes(self):

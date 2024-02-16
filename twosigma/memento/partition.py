@@ -103,7 +103,7 @@ class InMemoryPartition(Partition):
 
     """
 
-    _results = None          # type: Dict[str, object]
+    _results = None  # type: Dict[str, object]
 
     _output_keys = None  # type: Optional[Dict]
     """

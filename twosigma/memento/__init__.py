@@ -32,20 +32,16 @@ from . import runner_null  # noqa: F401
 
 from .reference import FunctionReference
 
-from .configuration import \
-    ConfigurationRepository, \
-    FunctionCluster, \
-    Environment
+from .configuration import ConfigurationRepository, FunctionCluster, Environment
 
-from .metadata import \
-    Memento, \
-    InvocationMetadata
+from .metadata import Memento, InvocationMetadata
 
-from .memento import \
-    forget_cluster, \
-    list_memoized_functions, \
-    memento_function, \
-    MementoFunction
+from .memento import (
+    forget_cluster,
+    list_memoized_functions,
+    memento_function,
+    MementoFunction,
+)
 
 from .resource_function import file_resource
 
@@ -63,7 +59,7 @@ __all__ = [
     "InvocationMetadata",
     "ConfigurationRepository",
     "FunctionCluster",
-    "Environment"
+    "Environment",
 ]
 
 

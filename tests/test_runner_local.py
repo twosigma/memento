@@ -21,11 +21,21 @@ from time import sleep
 
 import twosigma.memento as m
 
-from twosigma.memento import RunnerBackend, Environment, ConfigurationRepository, FunctionCluster  # noqa: F401
+from twosigma.memento import (
+    RunnerBackend,
+    Environment,
+    ConfigurationRepository,
+    FunctionCluster,
+)  # noqa: F401
 from twosigma.memento.context import InvocationContext  # noqa: F401
 from twosigma.memento.runner_local import LocalRunnerBackend
-from twosigma.memento.runner_test import set_runner_fn_test_1_called, get_runner_fn_test_1_called, runner_fn_test_1,\
-    fn_A, fn_B
+from twosigma.memento.runner_test import (
+    set_runner_fn_test_1_called,
+    get_runner_fn_test_1_called,
+    runner_fn_test_1,
+    fn_A,
+    fn_B,
+)
 from twosigma.memento.storage_filesystem import FilesystemStorageBackend
 from tests.test_runner_backend import RunnerBackendTester
 
@@ -58,28 +68,36 @@ class TestRunnerLocal(RunnerBackendTester):
 
     """
 
-    backend = None      # type: RunnerBackend
+    backend = None  # type: RunnerBackend
 
     def setup_method(self):
         super().setup_method()
         self.original_env = m.Environment.get()
         self.base_path = tempfile.mkdtemp(prefix="memento_runner_local_test")
         self.data_path = "{}/data".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(
-                        name="cluster1",
-                        storage=FilesystemStorageBackend(path=self.data_path),
-                        runner=LocalRunnerBackend()),
-                    "memento.unit_test": FunctionCluster(
-                        name="memento.unit_test",
-                        storage=FilesystemStorageBackend(path=self.data_path),
-                        runner=LocalRunnerBackend())
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1",
+                                storage=FilesystemStorageBackend(path=self.data_path),
+                                runner=LocalRunnerBackend(),
+                            ),
+                            "memento.unit_test": FunctionCluster(
+                                name="memento.unit_test",
+                                storage=FilesystemStorageBackend(path=self.data_path),
+                                runner=LocalRunnerBackend(),
+                            ),
+                        },
+                    )
+                ],
             )
-        ]))
+        )
 
         self.cluster = m.Environment.get().get_cluster("cluster1")
         self.backend = self.cluster.runner

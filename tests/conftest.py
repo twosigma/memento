@@ -17,7 +17,9 @@ import pytest
 
 
 def pytest_addoption(parser):
-    parser.addoption("--runslow", action="store_true", default=False, help="run slow tests")
+    parser.addoption(
+        "--runslow", action="store_true", default=False, help="run slow tests"
+    )
 
 
 def pytest_configure(config):
@@ -31,7 +33,8 @@ def pytest_collection_modifyitems(config, items):
 
     skip_slow = pytest.mark.skip(reason="need --runslow option to run")
     skip_non_canonical_version = pytest.mark.skip(
-        reason=f"need python canonical version {canonical_version} to run (running {current_version})")
+        reason=f"need python canonical version {canonical_version} to run (running {current_version})"
+    )
 
     for item in items:
         if "slow" in item.keywords and not config.getoption("--runslow"):

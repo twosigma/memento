@@ -52,7 +52,9 @@ class DependencyGraphType(ABC):
         pass
 
     @abstractmethod
-    def with_label_filter(self, label_filter: Callable[[str], str]) -> "DependencyGraphType":
+    def with_label_filter(
+        self, label_filter: Callable[[str], str]
+    ) -> "DependencyGraphType":
         pass
 
 
@@ -91,19 +93,20 @@ class MementoFunctionType(ABC):
 
     @abstractmethod
     def clone_with(
-            self,
-            fn: Callable = None,
-            src_fn: Callable = None,
-            cluster_name: str = None,
-            version: str = None,
-            calculated_version: str = None,
-            context: InvocationContext = None,
-            partial_args: Tuple[Any] = None,
-            partial_kwargs: Dict[str, Any] = None,
-            auto_dependencies: bool = True,
-            dependencies: List[Union[str, "MementoFunctionType"]] = None,
-            version_code_hash: str = None,
-            version_salt: str = None) -> "MementoFunctionType":
+        self,
+        fn: Callable = None,
+        src_fn: Callable = None,
+        cluster_name: str = None,
+        version: str = None,
+        calculated_version: str = None,
+        context: InvocationContext = None,
+        partial_args: Tuple[Any] = None,
+        partial_kwargs: Dict[str, Any] = None,
+        auto_dependencies: bool = True,
+        dependencies: List[Union[str, "MementoFunctionType"]] = None,
+        version_code_hash: str = None,
+        version_salt: str = None,
+    ) -> "MementoFunctionType":
         pass
 
     @abstractmethod
@@ -115,8 +118,9 @@ class MementoFunctionType(ABC):
         pass
 
     @abstractmethod
-    def call_batch(self, kwargs_list: List[Dict[str, Any]],
-                   raise_first_exception=True) -> List[Any]:
+    def call_batch(
+        self, kwargs_list: List[Dict[str, Any]], raise_first_exception=True
+    ) -> List[Any]:
         pass
 
     @abstractmethod
@@ -177,7 +181,8 @@ class MementoFunctionType(ABC):
 
     @abstractmethod
     def dependencies(
-            self, verbose=False, label_filter: Callable[[str], str] = None) -> DependencyGraphType:
+        self, verbose=False, label_filter: Callable[[str], str] = None
+    ) -> DependencyGraphType:
         pass
 
     @abstractmethod
@@ -199,4 +204,5 @@ class FunctionNotFoundError(ValueError):
     to an actual function.
 
     """
+
     pass

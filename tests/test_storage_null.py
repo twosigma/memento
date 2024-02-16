@@ -18,7 +18,12 @@ import tempfile
 
 import twosigma.memento as m
 
-from twosigma.memento import StorageBackend, FunctionCluster, ConfigurationRepository, Environment  # noqa: F401
+from twosigma.memento import (
+    StorageBackend,
+    FunctionCluster,
+    ConfigurationRepository,
+    Environment,
+)  # noqa: F401
 from twosigma.memento.metadata import ResultType, InvocationMetadata, Memento
 from twosigma.memento.storage_null import NullStorageBackend
 from twosigma.memento.types import VersionedDataSourceKey
@@ -42,20 +47,28 @@ class TestStorageNull:
 
     """
 
-    backend = None      # type: StorageBackend
+    backend = None  # type: StorageBackend
 
     def setup_method(self):
         self.original_env = m.Environment.get()
         self.base_path = tempfile.mkdtemp(prefix="memento_storage_null_test")
         self.data_path = "{}/data".format(self.base_path)
-        m.Environment.set(Environment(name="test1", base_dir=self.base_path, repos=[
-            ConfigurationRepository(
-                name="repo1",
-                clusters={
-                    "cluster1": FunctionCluster(name="cluster1", storage=NullStorageBackend())
-                }
+        m.Environment.set(
+            Environment(
+                name="test1",
+                base_dir=self.base_path,
+                repos=[
+                    ConfigurationRepository(
+                        name="repo1",
+                        clusters={
+                            "cluster1": FunctionCluster(
+                                name="cluster1", storage=NullStorageBackend()
+                            )
+                        },
+                    )
+                ],
             )
-        ]))
+        )
         self.cluster = m.Environment.get().get_cluster("cluster1")
         self.backend = self.cluster.storage
 
@@ -77,15 +90,16 @@ class TestStorageNull:
                 fn_reference_with_args=fn1_reference,
                 runtime=datetime.timedelta(test_runtime),
                 result_type=ResultType.string,
-                invocations=[
-                    fn2_reference
-                ],
-                resources=[]
+                invocations=[fn2_reference],
+                resources=[],
             ),
-            function_dependencies={fn1_reference.fn_reference, fn2_reference.fn_reference},
+            function_dependencies={
+                fn1_reference.fn_reference,
+                fn2_reference.fn_reference,
+            },
             runner={},
             correlation_id="abc123",
-            content_key=VersionedDataSourceKey("key", "def456")
+            content_key=VersionedDataSourceKey("key", "def456"),
         )
         result = fn_return_none_1()
         self.backend.memoize(None, memento, result)
@@ -93,8 +107,14 @@ class TestStorageNull:
         # The null storage should not waste compute cycles computing the content hash
         assert memento.content_key is None
 
-        assert self.backend.get_memento(fn1_reference.fn_reference_with_arg_hash()) is None
+        assert (
+            self.backend.get_memento(fn1_reference.fn_reference_with_arg_hash()) is None
+        )
 
-        assert not self.backend.is_memoized(fn1_reference.fn_reference, fn1_reference.arg_hash)
+        assert not self.backend.is_memoized(
+            fn1_reference.fn_reference, fn1_reference.arg_hash
+        )
         self.backend.forget_call(fn1_reference.fn_reference_with_arg_hash())
-        assert not self.backend.is_memoized(fn1_reference.fn_reference, fn1_reference.arg_hash)
+        assert not self.backend.is_memoized(
+            fn1_reference.fn_reference, fn1_reference.arg_hash
+        )

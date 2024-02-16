@@ -72,8 +72,12 @@ class DependencyGraph(DependencyGraphType):
     _all_rules = None  # type: List[HashRule]
     _label_filter = None  # type: Callable[[str], str]
 
-    def __init__(self, memento_fn: MementoFunctionType = False, verbose: bool = False,
-                 label_filter: Callable[[str], str] = None):
+    def __init__(
+        self,
+        memento_fn: MementoFunctionType = False,
+        verbose: bool = False,
+        label_filter: Callable[[str], str] = None,
+    ):
         """
         Creates a new dependency graph for the given Memento Function
 
@@ -93,28 +97,40 @@ class DependencyGraph(DependencyGraphType):
     def with_verbose(self, verbose: bool) -> "DependencyGraphType":
         return DependencyGraph(self.memento_fn, verbose, self._label_filter)
 
-    def with_label_filter(self, label_filter: Callable[[str], str]) -> "DependencyGraphType":
+    def with_label_filter(
+        self, label_filter: Callable[[str], str]
+    ) -> "DependencyGraphType":
         return DependencyGraph(self.memento_fn, self._verbose, label_filter)
 
     def transitive_memento_fn_dependencies(self) -> Set[MementoFunctionType]:
         """The set of all transitive dependencies on other Memento functions"""
         # noinspection PyUnresolvedReferences
         return set(
-            rule.memento_fn for rule in self._all_rules
+            rule.memento_fn
+            for rule in self._all_rules
             if hasattr(rule, "memento_fn") and rule.memento_fn != self.memento_fn
         )
 
     def direct_memento_fn_dependencies(self) -> Set[MementoFunctionType]:
         """The set of all direct dependencies on other Memento functions"""
+
         def is_direct_dependency(rule):
             is_memento_fn = hasattr(rule, "memento_fn") and rule.memento_fn is not None
-            return is_memento_fn and rule.memento_fn != self.memento_fn and rule.first_level
+            return (
+                is_memento_fn
+                and rule.memento_fn != self.memento_fn
+                and rule.first_level
+            )
 
         # noinspection PyTypeChecker,PyUnresolvedReferences
-        return set(rule.memento_fn for rule in self._all_rules if is_direct_dependency(rule))
+        return set(
+            rule.memento_fn for rule in self._all_rules if is_direct_dependency(rule)
+        )
 
     @classmethod
-    def _rules_until_first_memento_fn(cls, memento_fn: MementoFunctionType) -> List[HashRule]:
+    def _rules_until_first_memento_fn(
+        cls, memento_fn: MementoFunctionType
+    ) -> List[HashRule]:
         """
         Set of all hash rules up through the first MementoFunctions in the stack but not beyond.
 
@@ -132,8 +148,10 @@ class DependencyGraph(DependencyGraphType):
                 (node_type, _, node_name) = cls.parse_key(rule.key)
                 # noinspection PyUnresolvedReferences
                 if hasattr(rule, "memento_fn") and rule.memento_fn is not None:
-                    if rule.memento_fn.qualified_name_without_version ==\
-                            memento_fn.qualified_name_without_version:
+                    if (
+                        rule.memento_fn.qualified_name_without_version
+                        == memento_fn.qualified_name_without_version
+                    ):
                         # Exclude current function from result
                         continue
                 else:
@@ -142,7 +160,9 @@ class DependencyGraph(DependencyGraphType):
                         # Note: Converges to O(n^2) in degenerate very flat graphs
                         # This should be very small n in almost all realistic cases.
                         if node_name == r.parent_symbol:
-                            if r.key not in already_processed:  # prevent infinite loop on cycle
+                            if (
+                                r.key not in already_processed
+                            ):  # prevent infinite loop on cycle
                                 already_processed.add(r.key)
                                 more_rules.append(r)
                 result.append(rule)
@@ -150,18 +170,20 @@ class DependencyGraph(DependencyGraphType):
         return result
 
     @staticmethod
-    def generate_graphviz(graph: Dict[str, Node], qualified_name_without_version: str) -> Digraph:
+    def generate_graphviz(
+        graph: Dict[str, Node], qualified_name_without_version: str
+    ) -> Digraph:
         digraph = Digraph(
             format="svg",
             graph_attr={"rankdir": "BT"},
-            node_attr={"shape": "box", "fontname": "Helvetica", "fontsize": "10"}
+            node_attr={"shape": "box", "fontname": "Helvetica", "fontsize": "10"},
         )
 
         type_to_attrs = {
             "MementoFunction": {"shape": "rectangle"},
             "Function": {"shape": "rectangle", "style": "rounded"},
             "GlobalVariable": {"shape": "ellipse"},
-            "UndefinedSymbol": {"shape": "octagon"}
+            "UndefinedSymbol": {"shape": "octagon"},
         }
 
         def hash_name(name: str) -> str:
@@ -174,14 +196,21 @@ class DependencyGraph(DependencyGraphType):
             # Parse name and only show cluster and module if different from root node
             (cluster, module, fn_name) = _parse_name(node.id)
             label = "<"
-            label += html.escape(cluster) + "<br/>" if cluster is not None and \
-                cluster != root_cluster else ""
-            label += html.escape(module) + "<br/>" if module is not None and \
-                module != root_module else ""
+            label += (
+                html.escape(cluster) + "<br/>"
+                if cluster is not None and cluster != root_cluster
+                else ""
+            )
+            label += (
+                html.escape(module) + "<br/>"
+                if module is not None and module != root_module
+                else ""
+            )
             label += html.escape(node.label)
             label += ">"
-            attrs = type_to_attrs[node.node_type if node.node_type is
-                                  not None else "MementoFunction"]
+            attrs = type_to_attrs[
+                node.node_type if node.node_type is not None else "MementoFunction"
+            ]
             digraph.node(hash_name(node.id), label=label, **attrs)
 
             for edge in node.edges:
@@ -191,22 +220,24 @@ class DependencyGraph(DependencyGraphType):
 
     def graph(self) -> Digraph:
         graph = self._get_graph()
-        return DependencyGraph.generate_graphviz(graph,
-                                                 self.memento_fn.qualified_name_without_version)
+        return DependencyGraph.generate_graphviz(
+            graph, self.memento_fn.qualified_name_without_version
+        )
 
     @staticmethod
     def generate_df(graph: Dict[str, Node]) -> pd.DataFrame:
         rows = []
         for node in graph.values():
             for edge in node.edges:
-                rows.append({
-                    "src": node.id,
-                    "target": edge,
-                    "type": graph[edge].node_type
-                })
+                rows.append(
+                    {"src": node.id, "target": edge, "type": graph[edge].node_type}
+                )
 
-        return pd.DataFrame(data=rows, columns=["src", "target", "type"]).\
-            sort_values(by=["src", "type"]).reset_index(drop=True)
+        return (
+            pd.DataFrame(data=rows, columns=["src", "target", "type"])
+            .sort_values(by=["src", "type"])
+            .reset_index(drop=True)
+        )
 
     def df(self):
         """
@@ -233,22 +264,28 @@ class DependencyGraph(DependencyGraphType):
         semi_index = key.find(";")
         semi_index_2 = key.find(";", semi_index + 1)
         node_type = key[0:semi_index]
-        node_parent = key[semi_index + 1:semi_index_2]
-        node_name = key[semi_index_2 + 1:]
+        node_parent = key[semi_index + 1 : semi_index_2]
+        node_name = key[semi_index_2 + 1 :]
         return node_type, node_parent, node_name
 
     def _get_graph(self) -> Dict[str, Node]:
         if self._graph is None:
             self._graph = dict()
-            self.generate_graph(set(), self._graph, self.memento_fn, self._label_filter,
-                                self._verbose)
+            self.generate_graph(
+                set(), self._graph, self.memento_fn, self._label_filter, self._verbose
+            )
 
         return self._graph
 
     @classmethod
     def generate_graph(
-            cls, processed: Set[str], graph: Dict[str, Node],
-            root_fn: MementoFunctionType, label_filter: Callable[[str], str], verbose: bool):
+        cls,
+        processed: Set[str],
+        graph: Dict[str, Node],
+        root_fn: MementoFunctionType,
+        label_filter: Callable[[str], str],
+        verbose: bool,
+    ):
         """
         Generates a tree of Nodes and returns the root node (which is always a
         MementoFunction node).
@@ -300,8 +337,9 @@ class DependencyGraph(DependencyGraphType):
                 parent_node.edges.add(node_name)
                 # noinspection PyUnresolvedReferences
                 if hasattr(rule, "memento_fn") and rule.memento_fn is not None:
-                    cls.generate_graph(processed, graph, rule.memento_fn, label_filter,
-                                       verbose)
+                    cls.generate_graph(
+                        processed, graph, rule.memento_fn, label_filter, verbose
+                    )
         else:
             # Only add edges from root to MementoFunctions
             root_node = get_node(root_node_name, label_filter)
@@ -313,4 +351,6 @@ class DependencyGraph(DependencyGraphType):
                     node = get_node(node_name, label_filter)
                     node.node_type = node_type
                     root_node.edges.add(node_name)
-                    cls.generate_graph(processed, graph, rule.memento_fn, label_filter, verbose)
+                    cls.generate_graph(
+                        processed, graph, rule.memento_fn, label_filter, verbose
+                    )

@@ -26,8 +26,11 @@ To create a new storage backend instance, use :py:method:`StorageBackend.create`
 from abc import ABC, abstractmethod
 from typing import List, Iterable, Optional
 
-from .reference import FunctionReference, FunctionReferenceWithArguments,\
-    FunctionReferenceWithArgHash
+from .reference import (
+    FunctionReference,
+    FunctionReferenceWithArguments,
+    FunctionReferenceWithArgHash,
+)
 from .metadata import Memento
 
 # The set of known backends. Register new backends using StorageBackend.register.
@@ -78,7 +81,9 @@ class StorageBackend(ABC):
         return self.get_mementos([fn])[0]
 
     @abstractmethod
-    def get_mementos(self, fns: List[FunctionReferenceWithArgHash]) -> List[Optional[Memento]]:
+    def get_mementos(
+        self, fns: List[FunctionReferenceWithArgHash]
+    ) -> List[Optional[Memento]]:
         """
         For each invocation in the list, returns the call's Memento (memoization metadata)
         if the function is memoized for the given arg hash.
@@ -112,8 +117,12 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def read_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                      retry_on_none=False) -> Optional[bytes]:
+    def read_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        retry_on_none=False,
+    ) -> Optional[bytes]:
         """
         Read custom metadata for the given arguments from the given
         key. This is useful, for example, for reading logs
@@ -130,9 +139,13 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def write_metadata(self, fn_with_arg_hash: FunctionReferenceWithArgHash, key: str,
-                       value: bytes,
-                       store_with_content_key: Optional[VersionedDataSourceKey] = None):
+    def write_metadata(
+        self,
+        fn_with_arg_hash: FunctionReferenceWithArgHash,
+        key: str,
+        value: bytes,
+        store_with_content_key: Optional[VersionedDataSourceKey] = None,
+    ):
         """
         Write custom metadata for the given arguments for the given
         key. This is useful, for example, for writing logs
@@ -198,7 +211,9 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def memoize(self, key_override: Optional[str], memento: Memento, result: object) -> None:
+    def memoize(
+        self, key_override: Optional[str], memento: Memento, result: object
+    ) -> None:
         """
         Remember the result. As a side effect of this call, the content_hash is computed and
         set in the provided memento object.
@@ -260,7 +275,9 @@ class StorageBackend(ABC):
 
         global _registered_storage_backends
         if storage_type not in _registered_storage_backends:
-            raise ValueError("Unrecognized storage backend type {}".format(storage_type))
+            raise ValueError(
+                "Unrecognized storage backend type {}".format(storage_type)
+            )
         return _registered_storage_backends.get(storage_type)(config)
 
     @classmethod
