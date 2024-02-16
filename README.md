@@ -19,7 +19,16 @@ and null (never run). To use memento for distributed computation or shared stora
 plugins can be used.
 
 
-# Quick Start
+# Installation
+If you just want to use Memento, you can easily install it from the PyPI package repository, as follows:
+
+```bash
+$ pip install twosigma-memento 
+```
+
+Memento is tested with Python 3.8 and above, and should work on Linux, Windows and Mac.
+
+# Development Quick Start
 The following instructions should get you from a git clone to a working build of Memento.
 These instructions are tested on Linux and Windows but should work in other environments
 as well.
@@ -28,8 +37,6 @@ as well.
 You need a Python environment with hatch installed:
 
 ```bash
-$ python --version
-Python 3.11.1
 $ pip install hatch
 ```
 
