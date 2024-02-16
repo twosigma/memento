@@ -15,7 +15,7 @@
 """Public interface for memento module."""
 import importlib
 
-from importlib_metadata import entry_points
+from importlib.metadata import entry_points
 
 from .logging import set_log_level
 
