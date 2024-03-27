@@ -27,7 +27,7 @@ dependencies = [
   "graphviz>=0.13",
   "pandas>=1.0.5",
   "numpy>=1.15.4",
-  "jinja2>=2.10",
+  "jinja2>=3.1.3",
   "python-dateutil>=2.8",
   "pyyaml>=3.13",
   "tqdm>=4.31.1"
@@ -40,7 +40,7 @@ Issues = "https://github.com/twosigma/memento/issues"
 Source = "https://github.com/twosigma/memento"
 
 [tool.hatch.build.targets.wheel]
-packages = ["twosigma/memento"]
+packages = ["twosigma"]
 
 [tool.hatch.version]
 path = "twosigma/memento/__about__.py"

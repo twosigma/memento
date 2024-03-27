@@ -91,8 +91,7 @@ class TestConfiguration:
             if d:
                 shutil.rmtree(d)
 
-    @staticmethod
-    def get_sample_config():
+    def get_sample_config(self):
         return {
             "name": "config1",
             "description": "description1",

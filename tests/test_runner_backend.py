@@ -54,8 +54,7 @@ class RunnerBackendTester(ABC):
     def teardown_method(self):
         pass
 
-    @staticmethod
-    def test_memoize():
+    def test_memoize(self):
         # This also tests serializing function references
         assert {
             "a": 1,
@@ -68,8 +67,7 @@ class RunnerBackendTester(ABC):
             1, c=[{"three": 3}], b=2, e=runner_fn_test_1, f=[{"a": runner_fn_test_1}]
         )
 
-    @staticmethod
-    def test_call_stack_invocations_tracked():
+    def test_call_stack_invocations_tracked(self):
         # runner_fn_test_apply_and_double -->
         # runner_fn_test_apply_and_double -->
         # runner_fn_test_add
@@ -102,8 +100,7 @@ class RunnerBackendTester(ABC):
             == invocations[1].fn_reference.function_name
         )
 
-    @staticmethod
-    def test_correlation_id():
+    def test_correlation_id(self):
         """
         Test that a correlation id is generated and properly propagated
 
@@ -119,8 +116,7 @@ class RunnerBackendTester(ABC):
         corr_id_2 = memento_2.correlation_id
         assert corr_id_1 == corr_id_2
 
-    @staticmethod
-    def test_prevent_further_calls():
+    def test_prevent_further_calls(self):
         """
         Test that prevent_further_calls in recursive context prevents additional
         Memento calls.
@@ -135,8 +131,7 @@ class RunnerBackendTester(ABC):
             # the error, that means the RuntimeError happened on the wrong call (too early).
             assert "Caught further calls error" in str(e)
 
-    @staticmethod
-    def test_refuse_execution_of_non_dependencies():
+    def test_refuse_execution_of_non_dependencies(self):
         """
         Test that Memento refuses to execute a down-stream function that is not declared
         or detected as a dependency in the parent chain.
@@ -148,8 +143,7 @@ class RunnerBackendTester(ABC):
         # But allowed if explicit version is set:
         assert 1 == fn_with_explicit_version_calls_undeclared_dependency()
 
-    @staticmethod
-    def test_key_override_result():
+    def test_key_override_result(self):
         """
         Test that, if a function returns `KeyOverrideResult`, the result is stored at
         the overridden key instead of the standard location.
@@ -159,8 +153,7 @@ class RunnerBackendTester(ABC):
         mem = fn_returns_key_override_result.memento()
         assert "custom_key" == mem.content_key.key
 
-    @staticmethod
-    def test_memento_dependencies():
+    def test_memento_dependencies(self):
         """
         Test that, given a -> b -> c, we can extract the full call stack from the memento.
         In this test, we make a -> b a batch call so that we override any speculative local
@@ -184,8 +177,7 @@ class RunnerBackendTester(ABC):
                 == i_b.invocations[0].fn_reference.qualified_name
             )
 
-    @staticmethod
-    def test_memento_graph():
+    def test_memento_graph(self):
         """
         Test that, given a -> b -> c, we can extract the full call stack from the memento.
         In this test, we make a -> b a batch call so that we override any speculative local

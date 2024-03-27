@@ -436,72 +436,63 @@ class StorageBackendTester(ABC):
             fn1_reference.fn_reference, fn1_reference.arg_hash
         )
 
-    @staticmethod
-    def test_memoize_exception():
+    def test_memoize_exception(self):
         assert fn_raise_value_error.memento() is None
         with pytest.raises(ValueError):
             fn_raise_value_error()
         with pytest.raises(ValueError):
             fn_raise_value_error()
 
-    @staticmethod
-    def test_memoize_null():
+    def test_memoize_null(self):
         assert fn_return_none_1.memento() is None
         first = fn_return_none_1()
         assert fn_return_none_1.memento() is not None
         second = fn_return_none_1()
         assert first == second
 
-    @staticmethod
-    def test_memoize_str():
+    def test_memoize_str(self):
         assert fn_return_str.memento() is None
         first = fn_return_str()
         assert fn_return_str.memento() is not None
         second = fn_return_str()
         assert first == second
 
-    @staticmethod
-    def test_memoize_int():
+    def test_memoize_int(self):
         assert fn_return_int.memento() is None
         first = fn_return_int()
         assert fn_return_int.memento() is not None
         second = fn_return_int()
         assert first == second
 
-    @staticmethod
-    def test_memoize_float():
+    def test_memoize_float(self):
         assert fn_return_float.memento() is None
         first = fn_return_float()
         assert fn_return_float.memento() is not None
         second = fn_return_float()
         assert first == second
 
-    @staticmethod
-    def test_memoize_bool():
+    def test_memoize_bool(self):
         assert fn_return_bool.memento() is None
         first = fn_return_bool()
         assert fn_return_bool.memento() is not None
         second = fn_return_bool()
         assert first == second
 
-    @staticmethod
-    def test_memoize_date():
+    def test_memoize_date(self):
         assert fn_return_date.memento() is None
         first = fn_return_date()
         assert fn_return_date.memento() is not None
         second = fn_return_date()
         assert first == second
 
-    @staticmethod
-    def test_memoize_time():
+    def test_memoize_time(self):
         assert fn_return_time.memento() is None
         first = fn_return_time()
         assert fn_return_time.memento() is not None
         second = fn_return_time()
         assert first == second
 
-    @staticmethod
-    def test_memoize_dictionary():
+    def test_memoize_dictionary(self):
         assert fn_return_dictionary.memento() is None
         first = fn_return_dictionary()
         assert fn_return_dictionary.memento() is not None
@@ -510,8 +501,7 @@ class StorageBackendTester(ABC):
             assert first[key] == second[key]
         assert first["g"].equals(second["g"])
 
-    @staticmethod
-    def test_memoize_list():
+    def test_memoize_list(self):
         assert fn_return_list.memento() is None
         first = fn_return_list()
         assert fn_return_list.memento() is not None
@@ -520,120 +510,105 @@ class StorageBackendTester(ABC):
             assert first[x] == second[x]
         assert first[6].equals(second[6])
 
-    @staticmethod
-    def test_memoize_2d_array():
+    def test_memoize_2d_array(self):
         assert fn_return_2d_array.memento() is None
         first = fn_return_2d_array()
         assert fn_return_2d_array.memento() is not None
         second = fn_return_2d_array()
         assert first == second
 
-    @staticmethod
-    def test_numpy_array_bool():
+    def test_numpy_array_bool(self):
         assert fn_return_numpy_array_bool.memento() is None
         first = fn_return_numpy_array_bool()
         assert fn_return_numpy_array_bool.memento() is not None
         second = fn_return_numpy_array_bool()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_numpy_array_int8():
+    def test_numpy_array_int8(self):
         assert fn_return_numpy_array_int8.memento() is None
         first = fn_return_numpy_array_int8()
         assert fn_return_numpy_array_int8.memento() is not None
         second = fn_return_numpy_array_int8()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_numpy_array_int16():
+    def test_numpy_array_int16(self):
         assert fn_return_numpy_array_int16.memento() is None
         first = fn_return_numpy_array_int16()
         assert fn_return_numpy_array_int16.memento() is not None
         second = fn_return_numpy_array_int16()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_numpy_array_int32():
+    def test_numpy_array_int32(self):
         assert fn_return_numpy_array_int32.memento() is None
         first = fn_return_numpy_array_int32()
         assert fn_return_numpy_array_int32.memento() is not None
         second = fn_return_numpy_array_int32()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_numpy_array_int64():
+    def test_numpy_array_int64(self):
         assert fn_return_numpy_array_int64.memento() is None
         first = fn_return_numpy_array_int64()
         assert fn_return_numpy_array_int64.memento() is not None
         second = fn_return_numpy_array_int64()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_numpy_array_float32():
+    def test_numpy_array_float32(self):
         assert fn_return_numpy_array_float32.memento() is None
         first = fn_return_numpy_array_float32()
         assert fn_return_numpy_array_float32.memento() is not None
         second = fn_return_numpy_array_float32()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_numpy_array_float64():
+    def test_numpy_array_float64(self):
         assert fn_return_numpy_array_float64.memento() is None
         first = fn_return_numpy_array_float64()
         assert fn_return_numpy_array_float64.memento() is not None
         second = fn_return_numpy_array_float64()
         assert np.array_equal(first, second)
 
-    @staticmethod
-    def test_memoize_index():
+    def test_memoize_index(self):
         assert fn_return_index.memento() is None
         first = fn_return_index()
         assert fn_return_index.memento() is not None
         second = fn_return_index()
         assert first.equals(second)
 
-    @staticmethod
-    def test_memoize_series():
+    def test_memoize_series(self):
         assert fn_return_series.memento() is None
         first = fn_return_series()
         assert fn_return_series.memento() is not None
         second = fn_return_series()
         assert_series_equal(first, second)
 
-    @staticmethod
-    def test_memoize_series_with_index():
+    def test_memoize_series_with_index(self):
         assert fn_return_series_with_index.memento() is None
         first = fn_return_series_with_index()
         assert fn_return_series_with_index.memento() is not None
         second = fn_return_series_with_index()
         assert_series_equal(first, second)
 
-    @staticmethod
-    def test_memoize_series_with_multiindex():
+    def test_memoize_series_with_multiindex(self):
         assert fn_return_series_with_multiindex.memento() is None
         first = fn_return_series_with_multiindex()
         assert fn_return_series_with_multiindex.memento() is not None
         second = fn_return_series_with_multiindex()
         assert_series_equal(first, second)
 
-    @staticmethod
-    def test_memoize_dataframe():
+    def test_memoize_dataframe(self):
         assert fn_return_dataframe.memento() is None
         first = fn_return_dataframe()
         assert fn_return_dataframe.memento() is not None
         second = fn_return_dataframe()
         assert first.equals(second)
 
-    @staticmethod
-    def test_memoize_dataframe_with_index():
+    def test_memoize_dataframe_with_index(self):
         assert fn_return_dataframe_with_index.memento() is None
         first = fn_return_dataframe_with_index()
         assert fn_return_dataframe_with_index.memento() is not None
         second = fn_return_dataframe_with_index()
         assert first.equals(second)
 
-    @staticmethod
-    def test_memoize_partition():
+    def test_memoize_partition(self):
         assert fn_return_partition.memento() is None
         first = fn_return_partition()
         assert fn_return_partition.memento() is not None
@@ -795,8 +770,7 @@ class StorageBackendTester(ABC):
             self.backend.forget_call(fn_ref_1.fn_reference_with_arg_hash())
         assert self.backend.is_memoized(fn_ref_1.fn_reference, fn_ref_1.arg_hash)
 
-    @staticmethod
-    def test_metadata_rw():
+    def test_metadata_rw(self):
         fn_add_one(1)
         memento = fn_add_one.memento(1)
 
@@ -824,8 +798,7 @@ class StorageBackendTester(ABC):
             is None
         )
 
-    @staticmethod
-    def test_metadata_rw_store_with_data():
+    def test_metadata_rw_store_with_data(self):
         fn_add_one(1)
         memento = fn_add_one.memento(1)
 
@@ -853,8 +826,7 @@ class StorageBackendTester(ABC):
             is None
         )
 
-    @staticmethod
-    def test_content_addressable_storage():
+    def test_content_addressable_storage(self):
         r1 = fn1(100)
         r2 = fn2(100)
         assert r1 == r2
