@@ -72,7 +72,6 @@ class TestRunnerNull:
         shutil.rmtree(self.base_path)
         m.Environment.set(self.original_env)
 
-    @staticmethod
-    def test_null_runner():
+    def test_null_runner(self):
         with pytest.raises(RuntimeError):
             fn1()
