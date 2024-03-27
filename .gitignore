@@ -28,3 +28,4 @@ memento/twosigma/memento/generated/
 .settings
 .classpath
 .project
+venv/
