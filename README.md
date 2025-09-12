@@ -34,10 +34,40 @@ These instructions are tested on Linux and Windows but should work in other envi
 as well.
 
 ## Prerequisites
-You need a Python environment with hatch installed:
+You need a Python environment with either hatch or uv installed:
 
 ```bash
+# Install hatch
 $ pip install hatch
+
+# Or install uv
+$ pip install uv
+```
+
+## Using the Makefile (recommended)
+A Makefile is provided to simplify development setup. It uses uv to create a virtual environment and install dependencies.
+
+```bash
+# Show available commands
+$ make help
+
+# Create virtual environment and install all dependencies
+$ make all
+
+# Install development dependencies (black and hatch)
+$ make install-dev
+
+# Run tests
+$ make test
+
+# Run linting
+$ make lint
+
+# Install uv and uvx (if not already installed)
+$ make install-uv
+
+# Clean up
+$ make clean
 ```
 
 ## Build Memento

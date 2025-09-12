@@ -95,7 +95,7 @@ def fn_code_hash(fn: Callable, salt: str = None, environment: bytes = None) -> s
 
 
 def resolve_to_symbolic_names(
-    dependencies: List[Union[str, MementoFunctionType]]
+    dependencies: List[Union[str, MementoFunctionType]],
 ) -> Set[str]:
     """
     Takes a set of str and MementoFunctionType and resolves each to a symbolic name,

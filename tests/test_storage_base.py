@@ -386,7 +386,7 @@ class TestSerializationStrategy:
     @pytest.mark.slow
     def test_serialize_longstring(self):
         strategy = DefaultCodec.ValuePickleStrategy()
-        val = "\u0009\u000A\u0026\u2022\u25E6\u2219\u2023\u2043" * (2**27)
+        val = "\u0009\u000a\u0026\u2022\u25e6\u2219\u2023\u2043" * (2**27)
         encoded = strategy.encode(val)
         decoded = strategy.decode(encoded)
         assert val == decoded, f"Failed test on: {val}, decoded={decoded}"
