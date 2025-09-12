@@ -30,7 +30,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install black hatch
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with black
       run: |
         black --diff --check -t py311 .
